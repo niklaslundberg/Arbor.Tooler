@@ -116,5 +116,10 @@ namespace Arbor.Tooler
 
             return NuGetDownloadResult.Success(targetFile.FullName);
         }
+
+        public static NuGetDownloadClient CreateDefault()
+        {
+            return new NuGetDownloadClient(new HttpClient());
+        }
     }
 }

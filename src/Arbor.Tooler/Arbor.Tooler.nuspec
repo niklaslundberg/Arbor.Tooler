@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<package>
+  <metadata>
+    <id>Arbor.Tooler</id>
+    <version>0.0.1</version>
+    <title>Arbor.Tooler</title>
+    <authors>Niklas Lundberg</authors>
+    <owners></owners>
+    <description>
+      Helper tool to download NuGet packages
+    </description>
+    <releaseNotes>
+    </releaseNotes>
+    <summary>
+      Arbor.Tooler
+    </summary>
+    <language>en-US</language>
+    <projectUrl>https://github.com/niklaslundberg/Arbor.Tooler</projectUrl>
+    <iconUrl>https://nuget.org/Content/Images/packageDefaultIcon-50x50.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/niklaslundberg/Arbor.Tooler/blob/master/LICENSE.txt</licenseUrl>
+    <copyright>Copyright Niklas Lundberg 2018</copyright>
+    <dependencies>
+      <dependency id="NuGet.Versioning" version="[4.8.0,5.0.0)" />
+      <dependency id="Serilog" version="[2.7.0,3.0.0)" />
+    </dependencies>
+    <references></references>
+    <tags></tags>
+  </metadata>
+  <files>
+    <file src="bin\$configuration$\netstandard2.0\Arbor.Tooler.dll" target="lib\netstandard2.0" />
+  </files>
+</package>

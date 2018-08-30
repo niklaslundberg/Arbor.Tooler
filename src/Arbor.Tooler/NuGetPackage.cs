@@ -4,10 +4,10 @@ namespace Arbor.Tooler
 {
     public class NuGetPackage
     {
-        public NuGetPackage(NuGetPackageId nugetPackageId, NuGetPackageVersion nugetPackageVersion)
+        public NuGetPackage(NuGetPackageId nugetPackageId, NuGetPackageVersion nugetPackageVersion = null)
         {
             NuGetPackageId = nugetPackageId ?? throw new ArgumentNullException(nameof(nugetPackageId));
-            NuGetPackageVersion = nugetPackageVersion ?? throw new ArgumentNullException(nameof(nugetPackageVersion));
+            NuGetPackageVersion = nugetPackageVersion ?? NuGetPackageVersion.LatestAvailable;
         }
 
         public NuGetPackageId NuGetPackageId { get; }

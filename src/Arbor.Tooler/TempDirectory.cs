@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Arbor.Tooler
 {
-    public sealed class TempDirectory : IDisposable
+    internal sealed class TempDirectory : IDisposable
     {
         private TempDirectory(DirectoryInfo directory)
         {
@@ -23,7 +23,12 @@ namespace Arbor.Tooler
             if (Directory != null)
             {
                 Directory.Refresh();
-                Directory.Delete(true);
+
+                if (Directory.Exists)
+                {
+                    Directory.Delete(true);
+                }
+
                 Directory = null;
             }
         }

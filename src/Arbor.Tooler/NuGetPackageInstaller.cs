@@ -6,43 +6,61 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Versioning;
+using Serilog;
+using Serilog.Core;
 
 namespace Arbor.Tooler
 {
     public class NuGetPackageInstaller
     {
+        private readonly ILogger _logger;
         private readonly NuGetCliSettings _nugetCliSettings;
         private readonly NuGetDownloadClient _nugetDownloadClient;
         private readonly NuGetDownloadSettings _nugetDownloadSettings;
 
         public NuGetPackageInstaller(
-            NuGetCliSettings nugetCliSettings,
-            NuGetDownloadClient nugetDownloadClient,
-            NuGetDownloadSettings nugetDownloadSettings)
+            NuGetDownloadClient nugetDownloadClient = null,
+            NuGetCliSettings nugetCliSettings = null,
+            NuGetDownloadSettings nugetDownloadSettings = null,
+            ILogger logger = null)
         {
-            _nugetCliSettings = nugetCliSettings ?? throw new ArgumentNullException(nameof(nugetCliSettings));
-            _nugetDownloadClient = nugetDownloadClient;
-            _nugetDownloadSettings = nugetDownloadSettings;
+            _nugetCliSettings = nugetCliSettings ?? NuGetCliSettings.Default;
+            _nugetDownloadClient = nugetDownloadClient ?? NuGetDownloadClient.CreateDefault();
+            _nugetDownloadSettings = nugetDownloadSettings ?? NuGetDownloadSettings.Default;
+            _logger = logger ?? Logger.None;
+        }
+
+        public Task<NuGetPackageInstallResult> InstallPackageAsync(
+            string package,
+            CancellationToken cancellationToken = default)
+        {
+            return InstallPackageAsync(
+                new NuGetPackage(new NuGetPackageId(package), NuGetPackageVersion.LatestAvailable),
+                NugetPackageSettings.Default,
+                cancellationToken: cancellationToken);
         }
 
         public async Task<NuGetPackageInstallResult> InstallPackageAsync(
-            NugetPackageSettings nugetPackageSettings,
             NuGetPackage nugetPackage,
+            NugetPackageSettings nugetPackageSettings,
             DirectoryInfo installBaseDirectory = default,
             CancellationToken cancellationToken = default)
         {
-            DirectoryInfo packageInstallBaseDirectory = installBaseDirectory ??
-                                                        new DirectoryInfo(Path.Combine(
-                                                            Environment.GetFolderPath(Environment.SpecialFolder
-                                                                .UserProfile),
-                                                            "tools",
-                                                            "Arbor.Tooler",
-                                                            "packages")).EnsureExists();
+            nugetPackageSettings = nugetPackageSettings ?? NugetPackageSettings.Default;
 
-            DirectoryInfo packageBaseDir =
-                new DirectoryInfo(Path.Combine(packageInstallBaseDirectory.FullName,
-                        nugetPackage.NuGetPackageId.PackageId))
-                    .EnsureExists();
+            DirectoryInfo fallbackDirectory = DirectoryHelper.FromPathSegments(
+                DirectoryHelper.UserDirectory(),
+                "tools",
+                "Arbor.Tooler",
+                "packages");
+
+            DirectoryInfo packageInstallBaseDirectory = (installBaseDirectory ?? fallbackDirectory).EnsureExists();
+
+            DirectoryInfo packageBaseDir = DirectoryHelper
+                .FromPathSegments(
+                    packageInstallBaseDirectory.FullName,
+                    nugetPackage.NuGetPackageId.PackageId)
+                .EnsureExists();
 
             (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] downloadedPackages =
                 GetDownloadedPackages(nugetPackageSettings, packageBaseDir);
@@ -53,6 +71,9 @@ namespace Arbor.Tooler
                 {
                     (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) latest =
                         downloadedPackages.OrderByDescending(version => version.SemanticVersion).First();
+
+                    _logger.Debug("Found existing version {ExistingVersion}",
+                        latest.SemanticVersion.ToNormalizedString());
 
                     return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                         latest.SemanticVersion,
@@ -86,8 +107,6 @@ namespace Arbor.Tooler
                 arguments.Add("-Version");
                 arguments.Add(nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
             }
-
-            DirectoryInfo targetPackageDirectory;
 
             using (TempDirectory tempDirectory = TempDirectory.CreateTempDirectory())
             {
@@ -166,8 +185,8 @@ namespace Arbor.Tooler
                         existingPackage.Directory);
                 }
 
-                targetPackageDirectory = new DirectoryInfo(Path.Combine(packageBaseDir.FullName,
-                    nugetPackageFileSemanticVersion.ToNormalizedString()));
+                DirectoryInfo targetPackageDirectory = DirectoryHelper.FromPathSegments(packageBaseDir.FullName,
+                    nugetPackageFileSemanticVersion.ToNormalizedString());
 
                 targetPackageDirectory.EnsureExists();
 

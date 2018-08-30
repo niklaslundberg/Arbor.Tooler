@@ -18,18 +18,22 @@ namespace Arbor.Tooler.Tests.Integration
         [Fact]
         public async Task ThenItShouldDownloadTheNuGetExeSuccessfully()
         {
-            using (var httpClient = new HttpClient())
+            using (TempDirectory tempDirectory = TempDirectory.CreateTempDirectory())
             {
-                var nuGetDownloadClient = new NuGetDownloadClient(httpClient);
+                using (var httpClient = new HttpClient())
+                {
+                    var nuGetDownloadClient = new NuGetDownloadClient(httpClient);
 
-                var nuGetDownloadSettings = new NuGetDownloadSettings();
+                    var nuGetDownloadSettings =
+                        new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory.FullName);
 
-                NuGetDownloadResult nuGetDownloadResult =
-                    await nuGetDownloadClient.DownloadNuGetAsync(nuGetDownloadSettings, CancellationToken.None);
+                    NuGetDownloadResult nuGetDownloadResult =
+                        await nuGetDownloadClient.DownloadNuGetAsync(nuGetDownloadSettings, CancellationToken.None);
 
-                _output.WriteLine(nuGetDownloadResult.Result);
+                    _output.WriteLine(nuGetDownloadResult.Result);
 
-                Assert.True(nuGetDownloadResult.Succeeded);
+                    Assert.True(nuGetDownloadResult.Succeeded);
+                }
             }
         }
     }

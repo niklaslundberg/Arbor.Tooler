@@ -17,22 +17,32 @@ namespace Arbor.Tooler.Tests.Integration
         [Fact]
         public async Task ItShouldHaveDownloadedTheLatestVersion()
         {
-            using (var httpClient = new HttpClient())
+            using (TempDirectory nugetExeDownloadDir = TempDirectory.CreateTempDirectory())
             {
-                var nugetDownloadSettings = new NuGetDownloadSettings();
-                var nugetCliSettings = new NuGetCliSettings();
-                var nugetDownloadClient = new NuGetDownloadClient(httpClient);
+                using (TempDirectory packagesTempDir = TempDirectory.CreateTempDirectory())
+                {
+                    using (var httpClient = new HttpClient())
+                    {
+                        var nugetDownloadSettings =
+                            new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory.FullName);
 
-                var installer =
-                    new NuGetPackageInstaller(nugetCliSettings, nugetDownloadClient, nugetDownloadSettings);
+                        var nugetCliSettings = new NuGetCliSettings();
+                        var nugetDownloadClient = new NuGetDownloadClient(httpClient);
 
-                NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(
-                    new NugetPackageSettings(false),
-                    new NuGetPackage(new NuGetPackageId("Arbor.X"), NuGetPackageVersion.LatestAvailable));
+                        var installer =
+                            new NuGetPackageInstaller(nugetDownloadClient, nugetCliSettings, nugetDownloadSettings);
 
-                _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
+                        NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(new NuGetPackage(new NuGetPackageId("Arbor.X"), NuGetPackageVersion.LatestAvailable),
+                            new NugetPackageSettings(false),
+                            packagesTempDir.Directory);
 
-                Assert.Equal("2.2.5", nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
+                        _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
+                        _output.WriteLine(nuGetPackageInstallResult.PackageDirectory.FullName);
+                        _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
+
+                        Assert.Equal("2.2.5", nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
+                    }
+                }
             }
         }
     }

@@ -1,4 +1,6 @@
-﻿namespace Arbor.Tooler
+﻿using System;
+
+namespace Arbor.Tooler
 {
     public class NuGetDownloadSettings
     {
@@ -7,6 +9,9 @@
 
         public const string DefaultNuGetExeDownloadUriFormat =
             "https://dist.nuget.org/win-x86-commandline/{0}/nuget.exe";
+
+        private static readonly Lazy<NuGetDownloadSettings> _Default =
+            new Lazy<NuGetDownloadSettings>(() => new NuGetDownloadSettings());
 
         public NuGetDownloadSettings(
             bool? nugetDownloadEnabled = null,
@@ -21,9 +26,13 @@
         }
 
         public string NugetDownloadUriFormat { get; }
+
         public string DownloadDirectory { get; }
 
         public bool NugetDownloadEnabled { get; }
+
         public string NugetExeVersion { get; }
+
+        public static NuGetDownloadSettings Default => _Default.Value;
     }
 }

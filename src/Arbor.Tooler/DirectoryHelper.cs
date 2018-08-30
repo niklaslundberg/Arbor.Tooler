@@ -5,6 +5,25 @@ namespace Arbor.Tooler
 {
     internal static class DirectoryHelper
     {
+        public static string UserDirectory() => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        public static DirectoryInfo FromPathSegments(string first, params string[] otherParts)
+        {
+            if (string.IsNullOrWhiteSpace(first))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(first));
+            }
+
+            if (otherParts is null || otherParts.Length == 0)
+            {
+                return new DirectoryInfo(first);
+            }
+
+            string fullPath = Path.Combine(first, Path.Combine(otherParts));
+
+            return new DirectoryInfo(fullPath);
+        }
+
         public static DirectoryInfo EnsureExists(this DirectoryInfo directoryInfo)
         {
             if (directoryInfo == null)
