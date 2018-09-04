@@ -123,19 +123,42 @@ namespace Arbor.Tooler
                     FileName = nugetExePath
                 };
 
+                int exitCode;
                 using (var process = new Process
                 {
-                    StartInfo = startInfo, EnableRaisingEvents = true
+                    StartInfo = startInfo,
+                    EnableRaisingEvents = true
                 })
                 {
-                    process.ErrorDataReceived += (sender, args) => { };
-                    process.OutputDataReceived += (sender, args) => { };
+                    process.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(args.Data))
+                        {
+                            _logger.Error("{ProcessMessage}", args.Data);
+                        }
+                    };
+
+                    process.OutputDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(args.Data))
+                        {
+                            _logger.Information("{ProcessMessage}", args.Data);
+                        }
+                    };
 
                     process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
 
                     process.WaitForExit();
+
+                    exitCode = process.ExitCode;
+                }
+
+                if (exitCode != 0)
+                {
+                    _logger.Error("The process {Process} with arguments {Arguments} failed with exit code {ExitCode}", startInfo.FileName, startInfo.Arguments, exitCode);
+                    return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId, null, null);
                 }
 
                 DirectoryInfo packageDirectory =
@@ -145,7 +168,7 @@ namespace Arbor.Tooler
                 if (packageDirectory is null)
                 {
                     throw new InvalidOperationException(
-                        $"There is no package directory {nugetPackage.NuGetPackageId.PackageId} in '{tempDirectory.Directory.FullName}'");
+                        $"The expected package package directory '{nugetPackage.NuGetPackageId.PackageId}' in temp directory '{tempDirectory.Directory.FullName}' does not exist");
                 }
 
                 FileInfo[] nugetPackageFiles =
