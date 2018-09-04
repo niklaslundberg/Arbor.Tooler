@@ -118,6 +118,11 @@ namespace Arbor.Tooler
                 arguments.Add(nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
             }
 
+            if (nugetPackageSettings.AllowPreRelease)
+            {
+                arguments.Add("-PreRelease");
+            }
+
             using (TempDirectory tempDirectory = TempDirectory.CreateTempDirectory())
             {
                 arguments.Add("-OutputDirectory");
