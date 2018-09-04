@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" />
     <PackageReference Include="NuGet.Versioning" Version="4.8.0" />
     <PackageReference Include="serilog" Version="2.7.1" />
   </ItemGroup>

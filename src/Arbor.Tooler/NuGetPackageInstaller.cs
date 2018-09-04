@@ -158,7 +158,7 @@ namespace Arbor.Tooler
                 if (exitCode != 0)
                 {
                     _logger.Error("The process {Process} with arguments {Arguments} failed with exit code {ExitCode}", startInfo.FileName, startInfo.Arguments, exitCode);
-                    return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId, null, null);
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
                 DirectoryInfo packageDirectory =
