@@ -247,7 +247,7 @@ namespace Arbor.Tooler
                 (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) existingPackage =
                     GetDownloadedPackage(nugetPackage, downloadedPackages);
 
-                if (existingPackage != default)
+                if (existingPackage != default && existingPackage.Directory != null)
                 {
                     var nuGetPackageInstallResult = new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                         existingPackage.SemanticVersion,
@@ -262,6 +262,11 @@ namespace Arbor.Tooler
                     nugetPackageFileSemanticVersion.ToNormalizedString());
 
                 targetPackageDirectory.EnsureExists();
+
+                var files = tempDirectory.Directory.GetFiles("", SearchOption.AllDirectories)
+                    .Select(file => file.FullName).ToArray();
+
+                _logger.Debug("Found package files {Files}", files);
 
                 _logger.Debug("Copying files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
                     tempDirectory.Directory.FullName,
@@ -281,7 +286,9 @@ namespace Arbor.Tooler
         {
             (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) downloadedPackage =
                 downloadedPackages.SingleOrDefault(package =>
-                    package.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion);
+                    package.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion
+                    && package.Directory.EnumerateFiles("*.nupkg", SearchOption.AllDirectories).Any());
+
             return downloadedPackage;
         }
 
@@ -290,12 +297,15 @@ namespace Arbor.Tooler
             DirectoryInfo packageBaseDir)
         {
             IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> versionDirectories =
-                packageBaseDir.EnumerateDirectories().Select(dir =>
-                {
-                    bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
+                packageBaseDir.EnumerateDirectories()
+                    .Select(dir =>
+                    {
+                        bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
 
-                    return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
-                }).Where(tuple => tuple.Parsed);
+                        return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
+                    })
+                    .Where(tuple => tuple.Parsed
+                                    && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Any());
 
             IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> filtered =
                 versionDirectories;
