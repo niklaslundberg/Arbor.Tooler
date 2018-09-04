@@ -258,22 +258,36 @@ namespace Arbor.Tooler
                     return nuGetPackageInstallResult;
                 }
 
+
+                DirectoryInfo[] directoryInfos = tempDirectory.Directory.GetDirectories();
+
+                if (directoryInfos.Length != 1)
+                {
+                    _logger.Error("Expected exactly 1 directory to exist in '{TempDir}' but found {ActualFoundLength}",
+                        tempDirectory.Directory.FullName,
+                        directoryInfos.Length);
+
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+                }
+
+                var workDir = directoryInfos.Single();
+
                 DirectoryInfo targetPackageDirectory = DirectoryHelper.FromPathSegments(packageBaseDir.FullName,
                     nugetPackageFileSemanticVersion.ToNormalizedString());
 
                 targetPackageDirectory.EnsureExists();
 
-                var files = tempDirectory.Directory.GetFiles("", SearchOption.AllDirectories)
+                var files = workDir.GetFiles("", SearchOption.AllDirectories)
                     .Select(file => file.FullName).ToArray();
 
                 _logger.Debug("Found package files {Files}", files);
 
                 _logger.Debug("Copying {FileCount} files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
-                    tempDirectory.Directory.GetFiles("", SearchOption.AllDirectories).Length,
-                    tempDirectory.Directory.FullName,
+                    workDir.GetFiles("", SearchOption.AllDirectories).Length,
+                    workDir.FullName,
                     targetPackageDirectory);
 
-                tempDirectory.Directory.CopyRecursiveTo(targetPackageDirectory, _logger);
+                workDir.CopyRecursiveTo(targetPackageDirectory, _logger);
 
                 return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                     nugetPackageFileSemanticVersion,
