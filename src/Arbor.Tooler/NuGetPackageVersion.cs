@@ -99,5 +99,15 @@ namespace Arbor.Tooler
         {
             return StringComparer.OrdinalIgnoreCase.GetHashCode(Version);
         }
+
+        public override string ToString()
+        {
+            if (SemanticVersion != null)
+            {
+                return SemanticVersion.ToNormalizedString();
+            }
+
+            return $"[{Version}]";
+        }
     }
 }

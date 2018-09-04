@@ -52,5 +52,10 @@ namespace Arbor.Tooler
         {
             return new NuGetDownloadResult(targetFilePath, true);
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
+        }
     }
 }

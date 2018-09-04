@@ -4,9 +4,19 @@
     {
         public NuGetPackageId(string packageId)
         {
+            if (string.IsNullOrWhiteSpace(packageId))
+            {
+                throw new System.ArgumentNullException(nameof(packageId));
+            }
+
             PackageId = packageId;
         }
 
         public string PackageId { get; }
+
+        public override string ToString()
+        {
+            return PackageId;
+        }
     }
 }

@@ -33,5 +33,10 @@ namespace Arbor.Tooler
 
             return new NuGetPackageInstallResult(nugetPackageId, null, null);
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(NuGetPackageId)}: {NuGetPackageId}, {nameof(SemanticVersion)}: {SemanticVersion?.ToNormalizedString()}, {nameof(PackageDirectory)}: {PackageDirectory?.FullName}";
+        }
     }
 }

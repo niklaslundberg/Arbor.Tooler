@@ -4,7 +4,8 @@ namespace Arbor.Tooler
 {
     public class NuGetCliSettings
     {
-        private static readonly Lazy<NuGetCliSettings> _Default = new Lazy<NuGetCliSettings>(() => new NuGetCliSettings());
+        private static readonly Lazy<NuGetCliSettings> _Default =
+            new Lazy<NuGetCliSettings>(() => new NuGetCliSettings());
 
         public NuGetCliSettings(
             string nugetSourceName = null,
@@ -21,6 +22,13 @@ namespace Arbor.Tooler
         public string NugetConfigFile { get; }
 
         public string NuGetExePath { get; }
+
         public static NuGetCliSettings Default => _Default.Value;
+
+        public override string ToString()
+        {
+            return
+                $"{nameof(NugetSourceName)}: {NugetSourceName}, {nameof(NugetConfigFile)}: {NugetConfigFile}, {nameof(NuGetExePath)}: {NuGetExePath}";
+        }
     }
 }

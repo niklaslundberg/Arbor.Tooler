@@ -12,6 +12,12 @@ namespace Arbor.Tooler
         }
 
         public bool AllowPreRelease { get; }
+
         public static NugetPackageSettings Default => _Default.Value;
+
+        public override string ToString()
+        {
+            return $"{nameof(AllowPreRelease)}: {AllowPreRelease}";
+        }
     }
 }
