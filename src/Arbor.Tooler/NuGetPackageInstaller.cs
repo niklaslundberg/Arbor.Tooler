@@ -48,6 +48,8 @@ namespace Arbor.Tooler
         {
             nugetPackageSettings = nugetPackageSettings ?? NugetPackageSettings.Default;
 
+            _logger.Debug("Using nuget package settings {NuGetPackageSettings}", nugetPackageSettings);
+
             DirectoryInfo fallbackDirectory = DirectoryHelper.FromPathSegments(
                 DirectoryHelper.UserDirectory(),
                 "tools",
@@ -55,6 +57,9 @@ namespace Arbor.Tooler
                 "packages");
 
             DirectoryInfo packageInstallBaseDirectory = (installBaseDirectory ?? fallbackDirectory).EnsureExists();
+
+            _logger.Debug("Using package install base directory '{PackageBaseDirectory}'",
+                packageInstallBaseDirectory.FullName);
 
             DirectoryInfo packageBaseDir = DirectoryHelper
                 .FromPathSegments(
@@ -79,6 +84,8 @@ namespace Arbor.Tooler
                         latest.SemanticVersion,
                         latest.Directory);
                 }
+
+                _logger.Debug("Found no downloaded versions of {Package}", nugetPackage);
             }
 
             if (nugetPackage.NuGetPackageVersion.SemanticVersion != null)
@@ -88,6 +95,9 @@ namespace Arbor.Tooler
 
                 if (downloadedPackage != default)
                 {
+                    _logger.Debug("Found specific version {Package}, version {Version}",
+                        nugetPackage.NuGetPackageId.PackageId,
+                        nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
                     return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                         downloadedPackage.SemanticVersion,
                         downloadedPackage.Directory);
@@ -113,9 +123,15 @@ namespace Arbor.Tooler
                 arguments.Add("-OutputDirectory");
                 arguments.Add(tempDirectory.Directory.FullName);
 
+                _logger.Debug("Installing package {Package}", nugetPackage);
+
+                string processArgs = string.Join(" ", arguments.Select(argument => $"\"{argument}\""));
+
+                _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
+
                 var startInfo = new ProcessStartInfo
                 {
-                    Arguments = string.Join(" ", arguments.Select(argument => $"\"{argument}\"")),
+                    Arguments = processArgs,
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardError = true,
@@ -157,33 +173,57 @@ namespace Arbor.Tooler
 
                 if (exitCode != 0)
                 {
-                    _logger.Error("The process {Process} with arguments {Arguments} failed with exit code {ExitCode}", startInfo.FileName, startInfo.Arguments, exitCode);
+                    _logger.Error("The process {Process} with arguments {Arguments} failed with exit code {ExitCode}",
+                        startInfo.FileName,
+                        startInfo.Arguments,
+                        exitCode);
                     return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
+                string searchPattern = nugetPackage.NuGetPackageId.PackageId + ".*";
+
+                _logger.Debug("Looking for directories in '{Directory}' matching pattern {Pattern}",
+                    tempDirectory.Directory.FullName,
+                    searchPattern);
+
                 DirectoryInfo packageDirectory =
-                    tempDirectory.Directory.GetDirectories(nugetPackage.NuGetPackageId.PackageId + ".*")
+                    tempDirectory.Directory.GetDirectories(searchPattern)
                         .SingleOrDefault();
 
                 if (packageDirectory is null)
                 {
-                    throw new InvalidOperationException(
-                        $"The expected package package directory '{nugetPackage.NuGetPackageId.PackageId}' in temp directory '{tempDirectory.Directory.FullName}' does not exist");
+                    _logger.Error(
+                        "The expected package package directory '{PackageId}' in temp directory '{FullName}' does not exist",
+                        nugetPackage.NuGetPackageId.PackageId,
+                        tempDirectory.Directory.FullName);
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
+                string packagePattern = $"{nugetPackage.NuGetPackageId.PackageId}.*.nupkg";
+
+                _logger.Debug("Looking for packages in '{Directory}' matching pattern {Pattern}",
+                    tempDirectory.Directory.FullName,
+                    packagePattern);
+
                 FileInfo[] nugetPackageFiles =
-                    packageDirectory.GetFiles($"{nugetPackage.NuGetPackageId.PackageId}.*.nupkg");
+                    packageDirectory.GetFiles(packagePattern);
 
                 if (nugetPackageFiles.Length == 0)
                 {
-                    throw new InvalidOperationException(
-                        $"Could not find expected package {nugetPackage.NuGetPackageId} in temp directory '{packageDirectory.FullName}'");
+                    _logger.Error("Could not find expected package {NuGetPackageId} in temp directory '{FullName}'",
+                        nugetPackage.NuGetPackageId,
+                        packageDirectory.FullName);
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
                 if (nugetPackageFiles.Length > 1)
                 {
-                    throw new InvalidOperationException(
-                        $"Could not find exactly 1 package {nugetPackage.NuGetPackageId} in temp directory '{packageDirectory.FullName}', found {nugetPackageFiles.Length}");
+                    _logger.Error(
+                        "Could not find exactly 1 package {NuGetPackageId} in temp directory '{FullName}', found {Length}",
+                        nugetPackage.NuGetPackageId,
+                        packageDirectory.FullName,
+                        nugetPackageFiles.Length);
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
                 FileInfo nugetPackageFile = nugetPackageFiles.Single();
@@ -194,8 +234,9 @@ namespace Arbor.Tooler
                 if (!SemanticVersion.TryParse(nugetPackageFileVersion,
                     out SemanticVersion nugetPackageFileSemanticVersion))
                 {
-                    throw new InvalidOperationException(
-                        $"The downloaded file '{nugetPackageFile.FullName}' is not a semantic version nuget package");
+                    _logger.Error("The downloaded file '{FullName}' is not a semantic version nuget package",
+                        nugetPackageFile.FullName);
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
                 (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) existingPackage =
@@ -203,15 +244,23 @@ namespace Arbor.Tooler
 
                 if (existingPackage != default)
                 {
-                    return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+                    var nuGetPackageInstallResult = new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                         existingPackage.SemanticVersion,
                         existingPackage.Directory);
+
+                    _logger.Debug("Returning existing package result {NuGetPackageInstallResult}",
+                        nuGetPackageInstallResult);
+                    return nuGetPackageInstallResult;
                 }
 
                 DirectoryInfo targetPackageDirectory = DirectoryHelper.FromPathSegments(packageBaseDir.FullName,
                     nugetPackageFileSemanticVersion.ToNormalizedString());
 
                 targetPackageDirectory.EnsureExists();
+
+                _logger.Debug("Copying files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
+                    tempDirectory.Directory.FullName,
+                    targetPackageDirectory);
 
                 tempDirectory.Directory.CopyRecursiveTo(targetPackageDirectory);
 
@@ -231,7 +280,7 @@ namespace Arbor.Tooler
             return downloadedPackage;
         }
 
-        private static (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] GetDownloadedPackages(
+        private (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] GetDownloadedPackages(
             NugetPackageSettings nugetPackageSettings,
             DirectoryInfo packageBaseDir)
         {
@@ -248,11 +297,13 @@ namespace Arbor.Tooler
 
             if (!nugetPackageSettings.AllowPreRelease)
             {
+                _logger.Debug("Filtering out pre-release versions in package directory '{PackageDirectory}'", packageBaseDir);
                 filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
             }
 
             (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[]
                 filteredArray = filtered.ToArray();
+
             return filteredArray;
         }
 
