@@ -268,11 +268,12 @@ namespace Arbor.Tooler
 
                 _logger.Debug("Found package files {Files}", files);
 
-                _logger.Debug("Copying files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
+                _logger.Debug("Copying {FileCount} files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
+                    tempDirectory.Directory.GetFiles("", SearchOption.AllDirectories).Length,
                     tempDirectory.Directory.FullName,
                     targetPackageDirectory);
 
-                tempDirectory.Directory.CopyRecursiveTo(targetPackageDirectory);
+                tempDirectory.Directory.CopyRecursiveTo(targetPackageDirectory, _logger);
 
                 return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                     nugetPackageFileSemanticVersion,

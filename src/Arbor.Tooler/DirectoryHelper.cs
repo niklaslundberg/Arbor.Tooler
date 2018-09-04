@@ -41,7 +41,7 @@ namespace Arbor.Tooler
             return directoryInfo;
         }
 
-        public static void CopyRecursiveTo(this DirectoryInfo sourceDirectory, DirectoryInfo targetDirectory)
+        public static void CopyRecursiveTo(this DirectoryInfo sourceDirectory, DirectoryInfo targetDirectory, Serilog.ILogger logger = null)
         {
             if (targetDirectory == null)
             {
@@ -59,8 +59,11 @@ namespace Arbor.Tooler
                     $"Could not copy from and to the same directory '{sourceDirectory.FullName}'");
             }
 
+            sourceDirectory.Refresh();
+
             if (!sourceDirectory.Exists)
             {
+                logger?.Verbose("Source directory {Source} does not exist", sourceDirectory.FullName);
                 return;
             }
 
@@ -69,6 +72,8 @@ namespace Arbor.Tooler
             foreach (FileInfo file in sourceDirectory.EnumerateFiles())
             {
                 string targetFilePath = Path.Combine(targetDirectory.FullName, file.Name);
+
+                logger?.Verbose("Copying file '{From}' '{To}'", file.FullName, targetFilePath);
 
                 file.CopyTo(targetFilePath, true);
             }
