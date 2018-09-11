@@ -18,7 +18,7 @@ namespace Arbor.Tooler.Tests.Integration
         {
             var installer = new NuGetPackageInstaller();
 
-            NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync("Arbor.X");
+            NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync("Arbor.X").ConfigureAwait(false);
 
             _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
             _output.WriteLine(nuGetPackageInstallResult.PackageDirectory.FullName);

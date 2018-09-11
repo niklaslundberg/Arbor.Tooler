@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -12,7 +13,7 @@ namespace Arbor.Tooler.Tests.Integration
             _output = output;
         }
 
-        private ITestOutputHelper _output;
+        private readonly ITestOutputHelper _output;
 
         [Fact]
         public async Task ItShouldHaveDownloadedTheLatestVersion()
@@ -27,14 +28,21 @@ namespace Arbor.Tooler.Tests.Integration
                             new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory.FullName);
 
                         var nugetCliSettings = new NuGetCliSettings();
-                        var nugetDownloadClient = new NuGetDownloadClient(httpClient);
+                        var nugetDownloadClient = new NuGetDownloadClient();
 
                         var installer =
                             new NuGetPackageInstaller(nugetDownloadClient, nugetCliSettings, nugetDownloadSettings);
 
-                        NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(new NuGetPackage(new NuGetPackageId("Arbor.X"), NuGetPackageVersion.LatestAvailable),
-                            new NugetPackageSettings(false),
-                            packagesTempDir.Directory);
+                        var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.X"), NuGetPackageVersion.LatestAvailable);
+                        var nugetPackageSettings = new NugetPackageSettings(false);
+
+                        DirectoryInfo installBaseDirectory = packagesTempDir.Directory;
+
+                        NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(
+                            nuGetPackage,
+                            nugetPackageSettings,
+                            httpClient,
+                            installBaseDirectory).ConfigureAwait(false);
 
                         _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
                         _output.WriteLine(nuGetPackageInstallResult.PackageDirectory.FullName);

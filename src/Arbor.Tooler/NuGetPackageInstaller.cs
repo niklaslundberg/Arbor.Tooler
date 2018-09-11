@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Versioning;
@@ -25,7 +26,7 @@ namespace Arbor.Tooler
             ILogger logger = null)
         {
             _nugetCliSettings = nugetCliSettings ?? NuGetCliSettings.Default;
-            _nugetDownloadClient = nugetDownloadClient ?? NuGetDownloadClient.CreateDefault();
+            _nugetDownloadClient = nugetDownloadClient ?? new NuGetDownloadClient();
             _nugetDownloadSettings = nugetDownloadSettings ?? NuGetDownloadSettings.Default;
             _logger = logger ?? Logger.None;
         }
@@ -43,6 +44,7 @@ namespace Arbor.Tooler
         public async Task<NuGetPackageInstallResult> InstallPackageAsync(
             NuGetPackage nugetPackage,
             NugetPackageSettings nugetPackageSettings,
+            HttpClient httpClient = default,
             DirectoryInfo installBaseDirectory = default,
             CancellationToken cancellationToken = default)
         {
@@ -104,7 +106,7 @@ namespace Arbor.Tooler
                 }
             }
 
-            string nugetExePath = await GetNuGetExePathAsync(cancellationToken);
+            string nugetExePath = await GetNuGetExePathAsync(httpClient, cancellationToken).ConfigureAwait(false);
 
             var arguments = new List<string>
             {
@@ -258,7 +260,6 @@ namespace Arbor.Tooler
                     return nuGetPackageInstallResult;
                 }
 
-
                 DirectoryInfo[] directoryInfos = tempDirectory.Directory.GetDirectories();
 
                 if (directoryInfos.Length != 1)
@@ -282,7 +283,8 @@ namespace Arbor.Tooler
 
                 _logger.Debug("Found package files {Files}", files);
 
-                _logger.Debug("Copying {FileCount} files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
+                _logger.Debug(
+                    "Copying {FileCount} files recursively from '{TempDirectory}' to target '{TargetDirectory}'",
                     workDir.GetFiles("", SearchOption.AllDirectories).Length,
                     workDir.FullName,
                     targetPackageDirectory);
@@ -320,14 +322,15 @@ namespace Arbor.Tooler
                         return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
                     })
                     .Where(tuple => tuple.Parsed
-                                    && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Any());
+                                    && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
 
             IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> filtered =
                 versionDirectories;
 
             if (!nugetPackageSettings.AllowPreRelease)
             {
-                _logger.Debug("Filtering out pre-release versions in package directory '{PackageDirectory}'", packageBaseDir);
+                _logger.Debug("Filtering out pre-release versions in package directory '{PackageDirectory}'",
+                    packageBaseDir);
                 filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
             }
 
@@ -337,7 +340,9 @@ namespace Arbor.Tooler
             return filteredArray;
         }
 
-        private async Task<string> GetNuGetExePathAsync(CancellationToken cancellationToken)
+        private async Task<string> GetNuGetExePathAsync(
+            HttpClient httpClient = default,
+            CancellationToken cancellationToken = default)
         {
             if (!string.IsNullOrWhiteSpace(_nugetCliSettings.NuGetExePath)
                 && File.Exists(_nugetCliSettings.NuGetExePath))
@@ -346,7 +351,10 @@ namespace Arbor.Tooler
             }
 
             NuGetDownloadResult nugetDownloadResult =
-                await _nugetDownloadClient.DownloadNuGetAsync(_nugetDownloadSettings, cancellationToken);
+                await _nugetDownloadClient.DownloadNuGetAsync(_nugetDownloadSettings,
+                    _logger,
+                    httpClient,
+                    cancellationToken).ConfigureAwait(false);
 
             if (!nugetDownloadResult.Succeeded)
             {

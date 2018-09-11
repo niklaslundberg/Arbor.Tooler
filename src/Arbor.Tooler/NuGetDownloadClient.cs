@@ -3,25 +3,27 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Serilog;
 
 namespace Arbor.Tooler
 {
     public class NuGetDownloadClient
     {
-        private readonly HttpClient _httpClient;
-
-        public NuGetDownloadClient(HttpClient httpClient)
-        {
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        }
-
         public async Task<NuGetDownloadResult> DownloadNuGetAsync(
             NuGetDownloadSettings nuGetDownloadSettings,
-            CancellationToken cancellationToken)
+            [NotNull] ILogger logger,
+            HttpClient httpClient = null,
+            CancellationToken cancellationToken = default)
         {
             if (nuGetDownloadSettings == null)
             {
                 throw new ArgumentNullException(nameof(nuGetDownloadSettings));
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
             }
 
             if (!nuGetDownloadSettings.NugetDownloadEnabled)
@@ -81,22 +83,28 @@ namespace Arbor.Tooler
             string targetFileTempPath = Path.Combine(downloadDirectory.FullName,
                 $"nuget.exe-{DateTime.UtcNow.Ticks}.tmp");
 
+            logger.Debug("Downloading {Uri} to {TempFile}", nugetExeUri, targetFileTempPath);
+
             using (var request = new HttpRequestMessage())
             {
                 request.RequestUri = nugetExeUri;
 
+                httpClient = httpClient ?? new HttpClient();
+
                 using (HttpResponseMessage httpResponseMessage =
-                    await _httpClient.SendAsync(request, cancellationToken))
+                    await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
                 {
                     using (var nugetExeFileStream =
                         new FileStream(targetFileTempPath, FileMode.OpenOrCreate, FileAccess.Write))
                     {
-                        using (Stream downloadStream = await httpResponseMessage.Content.ReadAsStreamAsync())
+                        using (Stream downloadStream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
                         {
                             const int defaultBufferSize = 81920;
-                            await downloadStream.CopyToAsync(nugetExeFileStream, defaultBufferSize, cancellationToken);
+                            await downloadStream.CopyToAsync(nugetExeFileStream, defaultBufferSize, cancellationToken).ConfigureAwait(false);
 
-                            await nugetExeFileStream.FlushAsync(cancellationToken);
+                            await nugetExeFileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                            logger.Debug("Successfully downloaded {TempFile}", targetFileTempPath);
                         }
                     }
                 }
@@ -104,22 +112,21 @@ namespace Arbor.Tooler
 
             if (File.Exists(targetFile.FullName))
             {
-                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
             }
+
+            logger.Debug("Copying temp file {TempFile} to target file {TargetFile}", targetFileTempPath, targetFile.FullName);
 
             File.Copy(targetFileTempPath, targetFile.FullName, true);
 
             if (File.Exists(targetFileTempPath))
             {
                 File.Delete(targetFileTempPath);
+
+                logger.Debug("Deleted temp file {TempFile}", targetFileTempPath);
             }
 
             return NuGetDownloadResult.Success(targetFile.FullName);
-        }
-
-        public static NuGetDownloadClient CreateDefault()
-        {
-            return new NuGetDownloadClient(new HttpClient());
         }
     }
 }
