@@ -271,14 +271,14 @@ namespace Arbor.Tooler
                     return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
-                var workDir = directoryInfos.Single();
+                DirectoryInfo workDir = directoryInfos.Single();
 
                 DirectoryInfo targetPackageDirectory = DirectoryHelper.FromPathSegments(packageBaseDir.FullName,
                     nugetPackageFileSemanticVersion.ToNormalizedString());
 
                 targetPackageDirectory.EnsureExists();
 
-                var files = workDir.GetFiles("", SearchOption.AllDirectories)
+                string[] files = workDir.GetFiles("", SearchOption.AllDirectories)
                     .Select(file => file.FullName).ToArray();
 
                 _logger.Debug("Found package files {Files}", files);

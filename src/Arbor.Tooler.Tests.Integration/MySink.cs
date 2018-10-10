@@ -17,7 +17,7 @@ namespace Arbor.Tooler.Tests.Integration
 
         public void Emit(LogEvent logEvent)
         {
-            var message = logEvent.RenderMessage(_formatProvider);
+            string message = logEvent.RenderMessage(_formatProvider);
             _logAction(DateTimeOffset.Now + " " + message);
         }
     }
