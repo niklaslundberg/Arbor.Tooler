@@ -41,20 +41,6 @@ namespace Arbor.Tooler
                 return NuGetDownloadResult.MissingNuGetExeVersion;
             }
 
-            string downloadUriFormat =
-                nuGetDownloadSettings.NugetDownloadUriFormat.WithDefault(NuGetDownloadSettings
-                    .DefaultNuGetExeDownloadUriFormat);
-
-            string downloadUri = downloadUriFormat.IndexOf("{0}", StringComparison.OrdinalIgnoreCase) >= 0
-                ? string.Format(downloadUriFormat, nuGetDownloadSettings.NugetExeVersion)
-                : downloadUriFormat;
-
-            if (!Uri.TryCreate(downloadUri, UriKind.Absolute, out Uri nugetExeUri)
-                || !nugetExeUri.IsHttpOrHttps())
-            {
-                return NuGetDownloadResult.InvalidDownloadUri(downloadUri);
-            }
-
             string downloadDirectoryPath = nuGetDownloadSettings.DownloadDirectory.WithDefault(
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "tools", "nuget"));
 
@@ -76,12 +62,27 @@ namespace Arbor.Tooler
 
             if (targetFile.Exists)
             {
+                logger.Debug("Found existing nuget.exe at {FilePath}, skipping download", targetFile);
                 //TODO add update check
                 return NuGetDownloadResult.Success(targetFile.FullName);
             }
 
             string targetFileTempPath = Path.Combine(downloadDirectory.FullName,
                 $"nuget.exe-{DateTime.UtcNow.Ticks}.tmp");
+
+            string downloadUriFormat =
+                nuGetDownloadSettings.NugetDownloadUriFormat.WithDefault(NuGetDownloadSettings
+                    .DefaultNuGetExeDownloadUriFormat);
+
+            string downloadUri = downloadUriFormat.IndexOf("{0}", StringComparison.OrdinalIgnoreCase) >= 0
+                ? string.Format(downloadUriFormat, nuGetDownloadSettings.NugetExeVersion)
+                : downloadUriFormat;
+
+            if (!Uri.TryCreate(downloadUri, UriKind.Absolute, out Uri nugetExeUri)
+                || !nugetExeUri.IsHttpOrHttps())
+            {
+                return NuGetDownloadResult.InvalidDownloadUri(downloadUri);
+            }
 
             logger.Debug("Downloading {Uri} to {TempFile}", nugetExeUri, targetFileTempPath);
 
@@ -99,7 +100,7 @@ namespace Arbor.Tooler
                     {
                         using (Stream downloadStream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
                         {
-                            const int defaultBufferSize = 81920;
+                            const int defaultBufferSize = 8192;
                             await downloadStream.CopyToAsync(nugetExeFileStream, defaultBufferSize, cancellationToken).ConfigureAwait(false);
 
                             await nugetExeFileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
