@@ -114,10 +114,21 @@ namespace Arbor.Tooler
                 nugetPackage.NuGetPackageId.PackageId
             };
 
+
             if (nugetPackage.NuGetPackageVersion.SemanticVersion != null)
             {
                 arguments.Add("-Version");
                 arguments.Add(nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
+            }
+            else
+            {
+                SemanticVersion latestVersion = GetLatestVersionAsync(nugetPackage.NuGetPackageId.PackageId, nugetExePath, allowPreRelease: nugetPackageSettings.AllowPreRelease);
+
+                if (latestVersion != null)
+                {
+                    arguments.Add("-Version");
+                    arguments.Add(latestVersion.ToNormalizedString());
+                }
             }
 
             if (nugetPackageSettings.AllowPreRelease)
@@ -294,6 +305,105 @@ namespace Arbor.Tooler
                 return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                     nugetPackageFileSemanticVersion,
                     targetPackageDirectory);
+            }
+        }
+
+        private SemanticVersion GetLatestVersionAsync(
+            string packageId,
+            string nugetExePath,
+            string nuGetSource = null,
+            bool allowPreRelease = false)
+        {
+            int MaxBuildTimeInSeconds = 30;
+
+            using (var cancellationTokenSource =
+                new CancellationTokenSource(TimeSpan.FromSeconds(MaxBuildTimeInSeconds)))
+            {
+                var nugetArguments = new List<string> { "list", packageId };
+
+                if (!string.IsNullOrWhiteSpace(nuGetSource))
+                {
+                    nugetArguments.Add("-source");
+                    nugetArguments.Add(nuGetSource);
+                }
+
+                if (allowPreRelease)
+                {
+                    nugetArguments.Add("-Prerelease");
+                }
+
+                var lines = new List<string>();
+
+                int exitCode;
+                string processArgs = string.Join(" ", nugetArguments.Select(argument => $"\"{argument}\""));
+                var startInfo = new ProcessStartInfo
+                {
+                    Arguments = processArgs,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    FileName = nugetExePath
+                };
+                using (var process = new Process
+                {
+                    StartInfo = startInfo,
+                    EnableRaisingEvents = true
+                })
+                {
+                    process.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(args.Data))
+                        {
+                            _logger.Error("{ProcessMessage}", args.Data);
+                        }
+                    };
+
+                    process.OutputDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(args.Data))
+                        {
+                            lines.Add(args.Data);
+                            _logger.Information("{ProcessMessage}", args.Data);
+                        }
+                    };
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                    process.WaitForExit();
+
+                    exitCode = process.ExitCode;
+                }
+
+
+                if (exitCode != 0)
+                {
+                    return null;
+                }
+
+                string whatToFind = packageId + " ";
+                SemanticVersion[] matchingPackages =
+                    lines.Where(line => line.StartsWith(whatToFind, StringComparison.OrdinalIgnoreCase))
+                        .Select(line => line.Substring(whatToFind.Length))
+                        .Select(line => (SemanticVersion.TryParse(line, out SemanticVersion semVer), semVer))
+                        .Where(s => s.Item1)
+                        .Select(s => s.semVer)
+                        .ToArray();
+
+                if (matchingPackages.Length == 0)
+                {
+                    return null;
+                }
+
+                if (matchingPackages.Length == 1)
+                {
+                    return matchingPackages.Single();
+                }
+
+                return matchingPackages.Max();
+
             }
         }
 
