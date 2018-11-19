@@ -1,6 +1,8 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 using Serilog.Core;
 using Xunit;
 using Xunit.Abstractions;
@@ -28,16 +30,27 @@ namespace Arbor.Tooler.Tests.Integration
                     var nuGetDownloadSettings =
                         new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory.FullName);
 
-                    NuGetDownloadResult nuGetDownloadResult =
-                        await nuGetDownloadClient.DownloadNuGetAsync(
-                            nuGetDownloadSettings,
-                            Logger.None,
-                            httpClient,
-                            CancellationToken.None).ConfigureAwait(false);
 
-                    _output.WriteLine(nuGetDownloadResult.Result);
+                    using (var logWriter = new LogStringWriter(_output.WriteLine))
+                    {
+                        Console.SetOut(logWriter);
 
-                    Assert.True(nuGetDownloadResult.Succeeded);
+                        using (Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
+                            .MinimumLevel.Verbose()
+                            .CreateLogger())
+                        {
+                            NuGetDownloadResult nuGetDownloadResult =
+                                await nuGetDownloadClient.DownloadNuGetAsync(
+                                    nuGetDownloadSettings,
+                                    logger,
+                                    httpClient,
+                                    CancellationToken.None).ConfigureAwait(false);
+
+                            _output.WriteLine(nuGetDownloadResult.Result);
+
+                            Assert.True(nuGetDownloadResult.Succeeded);
+                        }
+                    }
                 }
             }
         }

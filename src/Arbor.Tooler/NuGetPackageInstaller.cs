@@ -53,9 +53,8 @@ namespace Arbor.Tooler
             _logger.Debug("Using nuget package settings {NuGetPackageSettings}", nugetPackageSettings);
 
             DirectoryInfo fallbackDirectory = DirectoryHelper.FromPathSegments(
-                DirectoryHelper.UserDirectory(),
-                "tools",
-                "Arbor.Tooler",
+                DirectoryHelper.UserLocalAppDataDirectory(),
+               "Arbor.Tooler",
                 "packages");
 
             DirectoryInfo packageInstallBaseDirectory = (installBaseDirectory ?? fallbackDirectory).EnsureExists();
