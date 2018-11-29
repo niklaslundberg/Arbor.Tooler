@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+    <PackageId>Arbor.Tooler.GlobalTool</PackageId>
+    <AssemblyName>dotnet-arbor-tooler</AssemblyName>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Arbor.Tooler\DirectoryHelper.cs" Link="DirectoryHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Arbor.Tooler\Arbor.Tooler.csproj" />
+  </ItemGroup>
+
+</Project>

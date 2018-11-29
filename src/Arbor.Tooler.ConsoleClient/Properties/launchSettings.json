@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Arbor.Tooler.ConsoleClient": {
+      "commandName": "Project",
+      "commandLineArgs": "-outputdirectory=C:\\Temp\\NuGetTemp"
+    }
+  }
+}

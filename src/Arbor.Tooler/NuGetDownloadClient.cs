@@ -47,80 +47,105 @@ namespace Arbor.Tooler
                 return NuGetDownloadResult.MissingNuGetExeVersion;
             }
 
-            string downloadDirectoryPath = nuGetDownloadSettings.DownloadDirectory.WithDefault(
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Arbor.Tooler", "tools", "nuget"));
+            bool ownsClient = httpClient is null;
 
-            var downloadDirectory = new DirectoryInfo(downloadDirectoryPath);
+            httpClient = httpClient ?? new HttpClient();
 
             try
             {
-                if (!downloadDirectory.Exists)
+                string downloadDirectoryPath = nuGetDownloadSettings.DownloadDirectory.WithDefault(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Arbor.Tooler",
+                        "tools",
+                        "nuget"));
+
+                var downloadDirectory = new DirectoryInfo(downloadDirectoryPath);
+
+                try
                 {
-                    downloadDirectory.Create();
-                }
-            }
-            catch (Exception ex)
-            {
-                return NuGetDownloadResult.FromException(ex);
-            }
-
-            var targetFile = new FileInfo(Path.Combine(downloadDirectory.FullName, "nuget.exe"));
-
-            string targetFileTempPath = Path.Combine(downloadDirectory.FullName,
-                $"nuget.exe-{DateTime.UtcNow.Ticks}.tmp");
-
-            if (targetFile.Exists)
-            {
-                logger.Debug("Found existing nuget.exe at {FilePath}, skipping download", targetFile);
-
-                if (nuGetDownloadSettings.UpdateEnabled)
-                {
-                    NuGetDownloadResult nuGetDownloadResult = await EnsureLatestAsync(targetFile, targetFileTempPath, logger, httpClient, cancellationToken);
-
-                    if (nuGetDownloadResult?.Succeeded == true)
+                    if (!downloadDirectory.Exists)
                     {
-                        return nuGetDownloadResult;
+                        downloadDirectory.Create();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return NuGetDownloadResult.FromException(ex);
+                }
+
+                var targetFile = new FileInfo(Path.Combine(downloadDirectory.FullName, "nuget.exe"));
+
+                string targetFileTempPath = Path.Combine(downloadDirectory.FullName,
+                    $"nuget.exe-{DateTime.UtcNow.Ticks}.tmp");
+
+                if (targetFile.Exists)
+                {
+                    logger.Debug("Found existing nuget.exe at {FilePath}, skipping download", targetFile);
+
+                    if (nuGetDownloadSettings.UpdateEnabled)
+                    {
+                        NuGetDownloadResult nuGetDownloadResult = await EnsureLatestAsync(targetFile,
+                            targetFileTempPath,
+                            logger,
+                            httpClient,
+                            cancellationToken);
+
+                        if (nuGetDownloadResult?.Succeeded == true)
+                        {
+                            return nuGetDownloadResult;
+                        }
+                    }
+
+                    return NuGetDownloadResult.Success(targetFile.FullName);
+                }
+
+                string downloadUriFormat =
+                    nuGetDownloadSettings.NugetDownloadUriFormat.WithDefault(NuGetDownloadSettings
+                        .DefaultNuGetExeDownloadUriFormat);
+
+                string downloadUri = downloadUriFormat.IndexOf("{0}", StringComparison.OrdinalIgnoreCase) >= 0
+                    ? string.Format(downloadUriFormat, nuGetDownloadSettings.NugetExeVersion)
+                    : downloadUriFormat;
+
+                if (!Uri.TryCreate(downloadUri, UriKind.Absolute, out Uri nugetExeUri)
+                    || !nugetExeUri.IsHttpOrHttps())
+                {
+                    return NuGetDownloadResult.InvalidDownloadUri(downloadUri);
+                }
+
+                NuGetDownloadResult result = await DownloadAsync(logger,
+                    nugetExeUri,
+                    targetFile,
+                    targetFileTempPath,
+                    httpClient,
+                    cancellationToken);
+
+                if (result.Succeeded)
+                {
+                    if (nuGetDownloadSettings.UpdateEnabled)
+                    {
+                        NuGetDownloadResult nuGetDownloadResult = await EnsureLatestAsync(targetFile,
+                            targetFileTempPath,
+                            logger,
+                            httpClient,
+                            cancellationToken);
+
+                        if (nuGetDownloadResult?.Succeeded == true)
+                        {
+                            return nuGetDownloadResult;
+                        }
                     }
                 }
 
-                return NuGetDownloadResult.Success(targetFile.FullName);
+                return result;
             }
-
-            string downloadUriFormat =
-                nuGetDownloadSettings.NugetDownloadUriFormat.WithDefault(NuGetDownloadSettings
-                    .DefaultNuGetExeDownloadUriFormat);
-
-            string downloadUri = downloadUriFormat.IndexOf("{0}", StringComparison.OrdinalIgnoreCase) >= 0
-                ? string.Format(downloadUriFormat, nuGetDownloadSettings.NugetExeVersion)
-                : downloadUriFormat;
-
-            if (!Uri.TryCreate(downloadUri, UriKind.Absolute, out Uri nugetExeUri)
-                || !nugetExeUri.IsHttpOrHttps())
+            finally
             {
-                return NuGetDownloadResult.InvalidDownloadUri(downloadUri);
-            }
-
-            NuGetDownloadResult result = await DownloadAsync(logger,
-                nugetExeUri,
-                targetFile,
-                targetFileTempPath,
-                httpClient,
-                cancellationToken);
-
-            if (result.Succeeded)
-            {
-                if (nuGetDownloadSettings.UpdateEnabled)
+                if (ownsClient)
                 {
-                    NuGetDownloadResult nuGetDownloadResult = await EnsureLatestAsync(targetFile, targetFileTempPath, logger, httpClient, cancellationToken);
-
-                    if (nuGetDownloadResult?.Succeeded == true)
-                    {
-                        return nuGetDownloadResult;
-                    }
+                    httpClient.Dispose();
                 }
             }
-
-            return result;
         }
 
         private async Task<NuGetDownloadResult> DownloadAsync(
@@ -137,27 +162,43 @@ namespace Arbor.Tooler
             {
                 request.RequestUri = nugetExeUri;
 
+                bool owsClient = httpClient is null;
+
                 httpClient = httpClient ?? new HttpClient();
 
-                using (HttpResponseMessage httpResponseMessage =
-                    await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
+                try
                 {
-                    using (var nugetExeFileStream =
-                        new FileStream(targetFileTempPath, FileMode.OpenOrCreate, FileAccess.Write))
+                    using (HttpResponseMessage httpResponseMessage =
+                        await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
                     {
-                        using (Stream downloadStream =
-                            await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                        using (var nugetExeFileStream =
+                            new FileStream(targetFileTempPath, FileMode.OpenOrCreate, FileAccess.Write))
                         {
-                            const int defaultBufferSize = 8192;
-                            await downloadStream.CopyToAsync(nugetExeFileStream, defaultBufferSize, cancellationToken)
-                                .ConfigureAwait(false);
+                            using (Stream downloadStream =
+                                await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                            {
+                                const int defaultBufferSize = 8192;
+                                await downloadStream.CopyToAsync(nugetExeFileStream,
+                                        defaultBufferSize,
+                                        cancellationToken)
+                                    .ConfigureAwait(false);
 
-                            await nugetExeFileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                                await nugetExeFileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                            logger.Debug("Successfully downloaded {TempFile}", targetFileTempPath);
+                                logger.Debug("Successfully downloaded {TempFile}", targetFileTempPath);
+                            }
                         }
                     }
+
                 }
+                finally
+                {
+                    if (owsClient)
+                    {
+                        httpClient.Dispose();
+                    }
+                }
+
             }
 
             if (File.Exists(targetFile.FullName))
