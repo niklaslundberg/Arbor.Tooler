@@ -46,8 +46,10 @@ namespace Arbor.Tooler
             NugetPackageSettings nugetPackageSettings,
             HttpClient httpClient = default,
             DirectoryInfo installBaseDirectory = default,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            TimeSpan? processTimeout = default)
         {
+            processTimeout = processTimeout ?? TimeSpan.FromMinutes(1);
             nugetPackageSettings = nugetPackageSettings ?? NugetPackageSettings.Default;
 
             _logger.Debug("Using nuget package settings {NuGetPackageSettings}", nugetPackageSettings);
@@ -183,7 +185,7 @@ namespace Arbor.Tooler
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
 
-                    process.WaitForExit();
+                    process.WaitForExit((int)processTimeout.Value.TotalMilliseconds);
 
                     exitCode = process.ExitCode;
                 }

@@ -23,6 +23,17 @@ namespace Arbor.Tooler.Tests.Integration
             {
                 _logAction(DateTimeOffset.Now + " " + message);
             }
+            else
+            {
+                if (logEvent.Exception != null)
+                {
+                    _logAction(logEvent.Exception.ToString());
+                }
+                else
+                {
+                    _logAction(logEvent.MessageTemplate.Render(logEvent.Properties));
+                }
+            }
         }
     }
 }

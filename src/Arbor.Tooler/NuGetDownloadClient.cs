@@ -11,6 +11,7 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NuGet.Versioning;
 using Serilog;
+using Serilog.Events;
 
 namespace Arbor.Tooler
 {
@@ -243,6 +244,7 @@ namespace Arbor.Tooler
                 var startInfo = new ProcessStartInfo(targetFile.FullName)
                 {
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
@@ -257,15 +259,31 @@ namespace Arbor.Tooler
                     {
                         if (!string.IsNullOrWhiteSpace(args?.Data))
                         {
+                            if (logger.IsEnabled(LogEventLevel.Verbose))
+                            {
+                                logger.Verbose("{Message}", args.Data);
+                            }
+
                             output.Add(args.Data);
                         }
                     };
 
+                    process.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(args?.Data))
+                        {
+                            logger.Error("{Message}", args.Data);
+                        }
+                    };
+
+                    process.EnableRaisingEvents = true;
+
                     process.Start();
 
                     process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
 
-                    process.WaitForExit((int)TimeSpan.FromMilliseconds(2000).TotalMilliseconds);
+                    process.WaitForExit((int)TimeSpan.FromMilliseconds(4000).TotalMilliseconds);
 
                     if (process.ExitCode != 0)
                     {
