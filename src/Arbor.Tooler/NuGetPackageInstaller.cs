@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Arbor.Processing;
 using NuGet.Versioning;
 using Serilog;
 using Serilog.Core;
@@ -46,10 +47,8 @@ namespace Arbor.Tooler
             NugetPackageSettings nugetPackageSettings,
             HttpClient httpClient = default,
             DirectoryInfo installBaseDirectory = default,
-            CancellationToken cancellationToken = default,
-            TimeSpan? processTimeout = default)
+            CancellationToken cancellationToken = default)
         {
-            processTimeout = processTimeout ?? TimeSpan.FromMinutes(1);
             nugetPackageSettings = nugetPackageSettings ?? NugetPackageSettings.Default;
 
             _logger.Debug("Using nuget package settings {NuGetPackageSettings}", nugetPackageSettings);
@@ -123,7 +122,7 @@ namespace Arbor.Tooler
             }
             else
             {
-                SemanticVersion latestVersion = GetLatestVersionAsync(nugetPackage.NuGetPackageId.PackageId, nugetExePath, allowPreRelease: nugetPackageSettings.AllowPreRelease);
+                SemanticVersion latestVersion = await GetLatestVersionAsync(nugetPackage.NuGetPackageId.PackageId, nugetExePath, allowPreRelease: nugetPackageSettings.AllowPreRelease);
 
                 if (latestVersion != null)
                 {
@@ -148,53 +147,30 @@ namespace Arbor.Tooler
 
                 _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
 
-                var startInfo = new ProcessStartInfo
-                {
-                    Arguments = processArgs,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    FileName = nugetExePath
-                };
 
-                int exitCode;
-                using (var process = new Process
-                {
-                    StartInfo = startInfo,
-                    EnableRaisingEvents = true
-                })
-                {
-                    process.ErrorDataReceived += (sender, args) =>
+                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(nugetExePath, arguments,
+                    standardOutLog: (message, category) =>
                     {
-                        if (!string.IsNullOrWhiteSpace(args.Data))
-                        {
-                            _logger.Error("{ProcessMessage}", args.Data);
-                        }
-                    };
-
-                    process.OutputDataReceived += (sender, args) =>
+                        _logger.Information("{Category} {Message}", message, category);
+                    },
+                    standardErrorAction: (message, category) =>
                     {
-                        if (!string.IsNullOrWhiteSpace(args.Data))
-                        {
-                            _logger.Information("{ProcessMessage}", args.Data);
-                        }
-                    };
+                        _logger.Error("{Category} {Message}", message, category);
+                    },
+                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
+                    verboseAction: (message, category) =>
+                    {
+                        _logger.Verbose("{Category} {Message}", message, category);
+                    },
+                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
+                    cancellationToken: cancellationToken);
 
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
 
-                    process.WaitForExit((int)processTimeout.Value.TotalMilliseconds);
-
-                    exitCode = process.ExitCode;
-                }
-
-                if (exitCode != 0)
+                if (!exitCode.IsSuccess)
                 {
                     _logger.Error("The process {Process} with arguments {Arguments} failed with exit code {ExitCode}",
-                        startInfo.FileName,
-                        startInfo.Arguments,
+                        nugetExePath,
+                        arguments,
                         exitCode);
                     return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
@@ -309,7 +285,7 @@ namespace Arbor.Tooler
             }
         }
 
-        private SemanticVersion GetLatestVersionAsync(
+        private async Task<SemanticVersion> GetLatestVersionAsync(
             string packageId,
             string nugetExePath,
             string nuGetSource = null,
@@ -335,51 +311,26 @@ namespace Arbor.Tooler
 
                 var lines = new List<string>();
 
-                int exitCode;
-                string processArgs = string.Join(" ", nugetArguments.Select(argument => $"\"{argument}\""));
-                var startInfo = new ProcessStartInfo
-                {
-                    Arguments = processArgs,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    FileName = nugetExePath
-                };
-                using (var process = new Process
-                {
-                    StartInfo = startInfo,
-                    EnableRaisingEvents = true
-                })
-                {
-                    process.ErrorDataReceived += (sender, args) =>
+
+                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(nugetExePath, nugetArguments,
+                    standardOutLog: (message, category) =>
                     {
-                        if (!string.IsNullOrWhiteSpace(args.Data))
-                        {
-                            _logger.Error("{ProcessMessage}", args.Data);
-                        }
-                    };
-
-                    process.OutputDataReceived += (sender, args) =>
+                        _logger.Information("{Category} {Message}", message, category);
+                        lines.Add(message);
+                    },
+                    standardErrorAction: (message, category) =>
                     {
-                        if (!string.IsNullOrWhiteSpace(args.Data))
-                        {
-                            lines.Add(args.Data);
-                            _logger.Information("{ProcessMessage}", args.Data);
-                        }
-                    };
+                        _logger.Error("{Category} {Message}", message, category);
+                    },
+                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
+                    verboseAction: (message, category) =>
+                    {
+                        _logger.Verbose("{Category} {Message}", message, category);
+                    },
+                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
+                    cancellationToken: cancellationTokenSource.Token);
 
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-
-                    process.WaitForExit();
-
-                    exitCode = process.ExitCode;
-                }
-
-
-                if (exitCode != 0)
+                if (exitCode.IsSuccess)
                 {
                     return null;
                 }

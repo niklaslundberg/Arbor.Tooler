@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Arbor.Processing;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NuGet.Versioning;
 using Serilog;
-using Serilog.Events;
 
 namespace Arbor.Tooler
 {
@@ -190,7 +189,6 @@ namespace Arbor.Tooler
                             }
                         }
                     }
-
                 }
                 finally
                 {
@@ -199,7 +197,6 @@ namespace Arbor.Tooler
                         httpClient.Dispose();
                     }
                 }
-
             }
 
             if (File.Exists(targetFile.FullName))
@@ -234,127 +231,110 @@ namespace Arbor.Tooler
 
             if (!targetFile.Exists)
             {
-                logger.Warning("The target nuget.exe file '{TargetFile}' does not exist, skipping latest check", targetFile.FullName);
+                logger.Warning("The target nuget.exe file '{TargetFile}' does not exist, skipping latest check",
+                    targetFile.FullName);
                 return null;
             }
 
             try
             {
+                void StandardErrorAction(string message, string category) => logger.Error("{Category} {Message}", message, category);
 
-                var startInfo = new ProcessStartInfo(targetFile.FullName)
+                void DebugAction(string message, string category) => logger.Debug("{Category} {Message}", message, category);
+
+                void VerboseAction(string message, string category) => logger.Verbose("{Category} {Message}", message, category);
+
+                void ToolAction(string message, string category)
                 {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+                    logger.Verbose("{Category} {Message}", message, category);
+                }
 
-                using (var process = new Process())
+                var output = new List<string>();
+
+                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(targetFile.FullName,
+                    standardOutLog: (message, category) =>
+                    {
+                        logger.Information("{Category} {Message}", message, category);
+                        output.Add(message);
+                    },
+                    standardErrorAction: StandardErrorAction,
+                    debugAction: DebugAction,
+                    verboseAction: VerboseAction,
+                    toolAction: ToolAction,
+                    cancellationToken: cancellationToken);
+
+                if (!exitCode.IsSuccess)
                 {
-                    process.StartInfo = startInfo;
+                    return null;
+                }
 
-                    var output = new List<string>();
+                // Found version string should be like 'NuGet Version: 4.7.1.5393'
 
-                    process.OutputDataReceived += (sender, args) =>
-                    {
-                        if (!string.IsNullOrWhiteSpace(args?.Data))
-                        {
-                            if (logger.IsEnabled(LogEventLevel.Verbose))
-                            {
-                                logger.Verbose("{Message}", args.Data);
-                            }
+                string foundVersionLine = output.SingleOrDefault(line => line.Trim().StartsWith("NuGet Version:"));
 
-                            output.Add(args.Data);
-                        }
-                    };
+                string[] semVerParts = foundVersionLine
+                    ?.Split(':').LastOrDefault()
+                    ?.Trim()
+                    .Split('.')
+                    .Take(3).ToArray();
 
-                    process.ErrorDataReceived += (sender, args) =>
-                    {
-                        if (!string.IsNullOrWhiteSpace(args?.Data))
-                        {
-                            logger.Error("{Message}", args.Data);
-                        }
-                    };
+                if (semVerParts is null)
+                {
+                    logger.Warning("Could not find current nuget.exe version, could not find expected output");
+                    return null;
+                }
 
-                    process.EnableRaisingEvents = true;
+                string mayBeVersion = string.Join(".", semVerParts);
 
-                    process.Start();
+                if (
+                    !SemanticVersion.TryParse(mayBeVersion, out SemanticVersion currentVersion))
+                {
+                    logger.Warning("Could not find nuget.exe version from value '{PossibleVersion}'", mayBeVersion);
+                    return null;
+                }
 
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
+                ImmutableArray<AvailableVersion> availableVersion = await GetAvailableVersionsFromNuGet(
+                    httpClient,
+                    logger,
+                    cancellationToken);
 
-                    process.WaitForExit((int)TimeSpan.FromMilliseconds(4000).TotalMilliseconds);
+                if (availableVersion.IsDefaultOrEmpty)
+                {
+                    return null;
+                }
 
-                    if (process.ExitCode != 0)
-                    {
-                        return null;
-                    }
+                AvailableVersion newest = availableVersion.OrderByDescending(s => s.SemanticVersion).First();
 
-                    // Found version string should be like 'NuGet Version: 4.7.1.5393'
-
-                    string foundVersionLine = output.SingleOrDefault(line => line.Trim().StartsWith("NuGet Version:"));
-
-                    string[] semVerParts = foundVersionLine
-                        ?.Split(':').LastOrDefault()
-                        ?.Trim()
-                        ?.Split('.')?
-                        .Take(3).ToArray();
-
-                    if (semVerParts is null)
-                    {
-                        logger.Warning("Could not find current nuget.exe version, could not find expected output");
-                        return null;
-                    }
-
-                    string mayBeVersion = string.Join(".", semVerParts);
-
-                    if (
-                        !SemanticVersion.TryParse(mayBeVersion, out SemanticVersion currentVersion))
-                    {
-                        logger.Warning("Could not find nuget.exe version from value '{PossibleVersion}'", mayBeVersion);
-                        return null;
-                    }
-
-                    ImmutableArray<AvailableVersion> availableVersion = await GetAvailableVersionsFromNuGet(
-                        httpClient,
-                        logger,
-                        cancellationToken);
-
-                    if (availableVersion.IsDefaultOrEmpty)
-                    {
-                        return null;
-                    }
-
-                    AvailableVersion newest = availableVersion.OrderByDescending(s => s.SemanticVersion).First();
-
-                    if (newest.SemanticVersion > currentVersion)
-                    {
-                        logger.Debug(
-                            "Newest available version found was {Newest} which is greater than the installed version {Installed}, downloading newer version",
-                            newest.SemanticVersion.ToNormalizedString(),
-                            currentVersion.ToNormalizedString());
-
-                        NuGetDownloadResult newerResult = await DownloadAsync(logger,
-                            newest.DownloadUrl,
-                            targetFile,
-                            targetFileTempPath,
-                            httpClient,
-                            cancellationToken);
-
-                        if (newerResult.Succeeded)
-                        {
-                            return newerResult;
-                        }
-
-                        logger.Warning(newerResult.Exception, "Could not download newest nuget.exe version {Version} {Result}", newest.SemanticVersion.ToNormalizedString(), newerResult.Result);
-                        return null;
-                    }
-
+                if (newest.SemanticVersion > currentVersion)
+                {
                     logger.Debug(
-                        "Newest available version found was {Newest} which is not greater than the installed version {Installed}",
+                        "Newest available version found was {Newest} which is greater than the installed version {Installed}, downloading newer version",
                         newest.SemanticVersion.ToNormalizedString(),
                         currentVersion.ToNormalizedString());
+
+                    NuGetDownloadResult newerResult = await DownloadAsync(logger,
+                        newest.DownloadUrl,
+                        targetFile,
+                        targetFileTempPath,
+                        httpClient,
+                        cancellationToken);
+
+                    if (newerResult.Succeeded)
+                    {
+                        return newerResult;
+                    }
+
+                    logger.Warning(newerResult.Exception,
+                        "Could not download newest nuget.exe version {Version} {Result}",
+                        newest.SemanticVersion.ToNormalizedString(),
+                        newerResult.Result);
+                    return null;
                 }
+
+                logger.Debug(
+                    "Newest available version found was {Newest} which is not greater than the installed version {Installed}",
+                    newest.SemanticVersion.ToNormalizedString(),
+                    currentVersion.ToNormalizedString());
             }
             catch (Exception ex)
             {
@@ -380,7 +360,9 @@ namespace Arbor.Tooler
                     {
                         if (!response.IsSuccessStatusCode)
                         {
-                            logger.Warning("Could not get available nuget.exe versions, http status code was not successful {StatusCode}", response.StatusCode);
+                            logger.Warning(
+                                "Could not get available nuget.exe versions, http status code was not successful {StatusCode}",
+                                response.StatusCode);
                             return ImmutableArray<AvailableVersion>.Empty;
                         }
 
@@ -426,7 +408,9 @@ namespace Arbor.Tooler
 
                 if (availableVersions?.Length > 0)
                 {
-                    logger.Debug("Found available NuGet versions [{Count}]\r\n{AvailableVersions}", availableVersions.Value.Length, availableVersions);
+                    logger.Debug("Found available NuGet versions [{Count}]\r\n{AvailableVersions}",
+                        availableVersions.Value.Length,
+                        availableVersions);
                 }
 
                 return availableVersions ?? ImmutableArray<AvailableVersion>.Empty;
