@@ -114,6 +114,22 @@ namespace Arbor.Tooler
                 nugetPackage.NuGetPackageId.PackageId
             };
 
+            if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetConfigFile))
+            {
+                if (!File.Exists(nugetPackageSettings.NugetConfigFile))
+                {
+                    _logger.Error("The specified NuGetConfig file {NuGetConfigFile} does not exist", nugetPackageSettings.NugetConfigFile);
+                    return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+                }
+
+                arguments.Add("-ConfigFile");
+            }
+
+            if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetSource))
+            {
+                arguments.Add("-Source");
+                arguments.Add(nugetPackageSettings.NugetSource);
+            }
 
             if (nugetPackage.NuGetPackageVersion.SemanticVersion != null)
             {
