@@ -18,7 +18,22 @@ namespace Arbor.Tooler.Tests.Integration
         public void Emit(LogEvent logEvent)
         {
             string message = logEvent.RenderMessage(_formatProvider);
-            _logAction(DateTimeOffset.Now + " " + message);
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                _logAction(DateTimeOffset.Now + " " + message);
+            }
+            else
+            {
+                if (logEvent.Exception != null)
+                {
+                    _logAction(logEvent.Exception.ToString());
+                }
+                else
+                {
+                    _logAction(logEvent.MessageTemplate.Render(logEvent.Properties));
+                }
+            }
         }
     }
 }
