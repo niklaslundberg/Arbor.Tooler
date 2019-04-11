@@ -23,7 +23,7 @@ namespace Arbor.Tooler
         {
             NugetDownloadUriFormat = nugetDownloadUriFormat.WithDefault(DefaultNuGetExeDownloadUriFormat);
             DownloadDirectory = downloadDirectory;
-            UpdateEnabled = updateEnabled ?? true;
+            UpdateEnabled = updateEnabled ?? false;
             NugetDownloadEnabled = nugetDownloadEnabled ?? DefaultNugetExeDownloadEnabled;
             NugetExeVersion = nugetExeVersion.WithDefault(DefaultNuGetExeVersion);
         }
