@@ -238,15 +238,15 @@ namespace Arbor.Tooler
 
             try
             {
-                void StandardErrorAction(string message, string category) => logger.Error("{Category} {Message}", message, category);
+                void StandardErrorAction(string message, string category) => logger.Error("{Category} {Message}", category, message);
 
-                void DebugAction(string message, string category) => logger.Debug("{Category} {Message}", message, category);
+                void DebugAction(string message, string category) => logger.Debug("{Category} {Message}", category, message);
 
-                void VerboseAction(string message, string category) => logger.Verbose("{Category} {Message}", message, category);
+                void VerboseAction(string message, string category) => logger.Verbose("{Category} {Message}", category, message);
 
                 void ToolAction(string message, string category)
                 {
-                    logger.Verbose("{Category} {Message}", message, category);
+                    logger.Verbose("{Category} {Message}", category, message);
                 }
 
                 var output = new List<string>();
@@ -254,7 +254,7 @@ namespace Arbor.Tooler
                 ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(targetFile.FullName,
                     standardOutLog: (message, category) =>
                     {
-                        logger.Information("{Category} {Message}", message, category);
+                        logger.Information("{Category} {Message}", category, message);
                         output.Add(message);
                     },
                     standardErrorAction: StandardErrorAction,

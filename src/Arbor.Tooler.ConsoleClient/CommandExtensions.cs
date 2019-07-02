@@ -8,7 +8,7 @@ namespace Arbor.Tooler.ConsoleClient
     {
         public static string GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
-            var foundPair = keys.SingleOrDefault(k => k.StartsWith(key + "=", StringComparison.OrdinalIgnoreCase));
+            var foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
 
             if (foundPair is null)
             {
@@ -22,14 +22,14 @@ namespace Arbor.Tooler.ConsoleClient
                 return default;
             }
 
-            int valueStart = separatorIndex +1;
+            int valueStart = separatorIndex + 1;
 
             if (foundPair.Length < valueStart)
             {
                 return default;
             }
 
-            string  commandLineValue = foundPair.Substring(valueStart);
+            string commandLineValue = foundPair.Substring(valueStart);
 
             return commandLineValue;
         }

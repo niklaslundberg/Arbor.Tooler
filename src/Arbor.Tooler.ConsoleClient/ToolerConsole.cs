@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 
 namespace Arbor.Tooler.ConsoleClient
 {
@@ -19,7 +20,10 @@ namespace Arbor.Tooler.ConsoleClient
 
         public static ToolerConsole Create(string[] args)
         {
-            Logger logger = new LoggerConfiguration().WriteTo.Console().MinimumLevel.Debug().CreateLogger();
+            Logger logger = new LoggerConfiguration()
+                .WriteTo.Console(standardErrorFromLevel: LogEventLevel.Error)
+                .MinimumLevel.Debug()
+                .CreateLogger();
 
             return new ToolerConsole(args, logger);
         }
@@ -92,11 +96,15 @@ namespace Arbor.Tooler.ConsoleClient
             _logger.Information(
                 "Example usage: {Command} {Argument}{Separator}{ExampleArgument}",
                 "dotnet-arbor-tooler",
-                CommandExtensions.DownloadDirectory, '=', @"C:\Tools\NuGet");
+                CommandExtensions.DownloadDirectory,
+                '=',
+                @"C:\Tools\NuGet");
             _logger.Information(
                 "Example usage, default location: {Command} {Argument}{Separator}{DefaultArgument}",
                 "dotnet-arbor-tooler",
-                CommandExtensions.DownloadDirectory, '=', "default");
+                CommandExtensions.DownloadDirectory,
+                '=',
+                "default");
         }
     }
 }

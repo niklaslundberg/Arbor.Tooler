@@ -4,7 +4,7 @@ namespace Arbor.Tooler
 {
     public class NugetPackageSettings
     {
-        private static readonly Lazy<NugetPackageSettings> _Default = new Lazy<NugetPackageSettings>(() => new NugetPackageSettings(false));
+        private static readonly Lazy<NugetPackageSettings> DefaultSettings = new Lazy<NugetPackageSettings>(() => new NugetPackageSettings(false));
 
         public NugetPackageSettings(bool allowPreRelease, string nugetSource = null, string nugetConfigFile = null)
         {
@@ -19,7 +19,7 @@ namespace Arbor.Tooler
 
         public string NugetConfigFile { get; }
 
-        public static NugetPackageSettings Default => _Default.Value;
+        public static NugetPackageSettings Default => DefaultSettings.Value;
 
         public override string ToString()
         {

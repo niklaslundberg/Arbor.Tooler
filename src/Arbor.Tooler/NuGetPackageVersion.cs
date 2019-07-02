@@ -67,7 +67,7 @@ namespace Arbor.Tooler
 
         public bool Equals(NuGetPackageVersion other)
         {
-            if (ReferenceEquals(null, other))
+            if (other is null)
             {
                 return false;
             }
@@ -82,7 +82,7 @@ namespace Arbor.Tooler
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is null)
             {
                 return false;
             }
