@@ -26,7 +26,14 @@ namespace Arbor.Tooler
 
                 if (Directory.Exists)
                 {
-                    Directory.Delete(true);
+                    try
+                    {
+                        Directory.Delete(true);
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        // ignore
+                    }
                 }
 
                 Directory = null;
