@@ -122,6 +122,7 @@ namespace Arbor.Tooler
                 }
 
                 arguments.Add("-ConfigFile");
+                arguments.Add(nugetPackageSettings.NugetConfigFile);
             }
 
             if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetSource))

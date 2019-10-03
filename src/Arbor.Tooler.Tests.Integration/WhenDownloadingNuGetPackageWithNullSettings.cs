@@ -13,7 +13,7 @@ namespace Arbor.Tooler.Tests.Integration
 
         private ITestOutputHelper _output;
 
-        [Fact]
+        [Fact(Skip = "Environment dependent")]
         public async Task ItShouldHaveDownloadedTheLatestVersion()
         {
             var installer = new NuGetPackageInstaller();
