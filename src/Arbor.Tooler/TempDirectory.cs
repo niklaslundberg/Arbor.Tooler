@@ -20,24 +20,26 @@ namespace Arbor.Tooler
 
         public void Dispose()
         {
-            if (Directory != null)
+            if (Directory is null)
             {
-                Directory.Refresh();
-
-                if (Directory.Exists)
-                {
-                    try
-                    {
-                        Directory.Delete(true);
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        // ignore
-                    }
-                }
-
-                Directory = null;
+                return;
             }
+
+            Directory?.Refresh();
+
+            if (Directory.Exists)
+            {
+                try
+                {
+                    Directory.Delete(true);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // ignore
+                }
+            }
+
+            Directory = null;
         }
     }
 }

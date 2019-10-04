@@ -9,6 +9,7 @@ using Arbor.Processing;
 using NuGet.Versioning;
 using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 
 namespace Arbor.Tooler
 {
@@ -138,7 +139,12 @@ namespace Arbor.Tooler
             }
             else
             {
-                SemanticVersion latestVersion = await GetLatestVersionAsync(nugetPackage.NuGetPackageId.PackageId, nugetExePath, allowPreRelease: nugetPackageSettings.AllowPreRelease);
+                SemanticVersion latestVersion = await GetLatestVersionAsync(
+                    nugetPackage.NuGetPackageId.PackageId,
+                    nugetExePath,
+                    allowPreRelease: nugetPackageSettings.AllowPreRelease,
+                    nugetConfig: nugetPackageSettings.NugetConfigFile,
+                    nuGetSource: nugetPackageSettings.NugetSource);
 
                 if (latestVersion != null)
                 {
@@ -152,6 +158,12 @@ namespace Arbor.Tooler
                 arguments.Add("-PreRelease");
             }
 
+            if (_logger.IsEnabled(LogEventLevel.Debug))
+            {
+                arguments.Add("-verbosity");
+                arguments.Add("detailed");
+            }
+
             using (TempDirectory tempDirectory = TempDirectory.CreateTempDirectory())
             {
                 arguments.Add("-OutputDirectory");
@@ -162,6 +174,10 @@ namespace Arbor.Tooler
                 string processArgs = string.Join(" ", arguments.Select(argument => $"\"{argument}\""));
 
                 _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
+
+                //arguments.Clear();
+
+                //arguments = new List<string> {"sources","list"};
 
 
                 ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
@@ -266,7 +282,9 @@ namespace Arbor.Tooler
                     return nuGetPackageInstallResult;
                 }
 
-                DirectoryInfo[] directoryInfos = tempDirectory.Directory.GetDirectories();
+                DirectoryInfo[] directoryInfos = tempDirectory.Directory.GetDirectories()
+                    .Where(dir => dir.Name.StartsWith(nugetPackage.NuGetPackageId.PackageId + "."))
+                    .ToArray();
 
                 if (directoryInfos.Length != 1)
                 {
@@ -307,19 +325,26 @@ namespace Arbor.Tooler
             string packageId,
             string nugetExePath,
             string nuGetSource = null,
-            bool allowPreRelease = false)
+            bool allowPreRelease = false,
+            string prefix = "packageid:",
+            int maxBuildTimeInSeconds = 30,
+            string nugetConfig = null)
         {
-            int MaxBuildTimeInSeconds = 30;
-
             using (var cancellationTokenSource =
-                new CancellationTokenSource(TimeSpan.FromSeconds(MaxBuildTimeInSeconds)))
+                new CancellationTokenSource(TimeSpan.FromSeconds(maxBuildTimeInSeconds)))
             {
-                var nugetArguments = new List<string> { "list", $"packageid:{packageId}" };
+                var nugetArguments = new List<string> { "list", $"{prefix}{packageId}" };
 
                 if (!string.IsNullOrWhiteSpace(nuGetSource))
                 {
                     nugetArguments.Add("-source");
                     nugetArguments.Add(nuGetSource);
+                }
+
+                if (!string.IsNullOrWhiteSpace(nugetConfig))
+                {
+                    nugetArguments.Add("-ConfigFile");
+                    nugetArguments.Add(nugetConfig);
                 }
 
                 if (allowPreRelease)
@@ -328,7 +353,6 @@ namespace Arbor.Tooler
                 }
 
                 var lines = new List<string>();
-
 
                 ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
                     nugetExePath,
@@ -350,7 +374,7 @@ namespace Arbor.Tooler
                     toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
                     cancellationToken: cancellationTokenSource.Token);
 
-                if (exitCode.IsSuccess)
+                if (!exitCode.IsSuccess)
                 {
                     return null;
                 }
@@ -366,7 +390,16 @@ namespace Arbor.Tooler
 
                 if (matchingPackages.Length == 0)
                 {
-                    return null;
+                    if (!string.IsNullOrWhiteSpace(prefix))
+                    {
+                        return await GetLatestVersionAsync(packageId,
+                            nugetExePath,
+                            nuGetSource,
+                            allowPreRelease,
+                            prefix: "",
+                            maxBuildTimeInSeconds,
+                            nugetConfig: nugetConfig);
+                    }
                 }
 
                 if (matchingPackages.Length == 1)

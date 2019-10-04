@@ -39,8 +39,12 @@ namespace Arbor.Tooler.Tests.Integration
                             string nugetConfigFile = Path.Combine(VcsTestPathHelper.FindVcsRootPath(),
                                 "src",
                                 "Arbor.Tooler.Tests.Integration",
+                                "testconfig",
                                 "nuget.config");
-                            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile);
+
+                            string nugetSource = "LocalToolerTest";
+
+                            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile, nugetSourceName: nugetSource);
                             var nugetDownloadClient = new NuGetDownloadClient();
 
                             var installer =
@@ -51,7 +55,7 @@ namespace Arbor.Tooler.Tests.Integration
 
                             var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
                                 NuGetPackageVersion.LatestAvailable);
-                            var nugetPackageSettings = new NugetPackageSettings(false, nugetConfigFile: nugetConfigFile);
+                            var nugetPackageSettings = new NugetPackageSettings(false, nugetConfigFile: nugetConfigFile, nugetSource: nugetSource);
 
                             DirectoryInfo installBaseDirectory = packagesTempDir.Directory;
 

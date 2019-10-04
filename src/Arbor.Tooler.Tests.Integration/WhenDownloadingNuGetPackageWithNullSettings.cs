@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Serilog;
+using Serilog.Core;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -11,20 +14,30 @@ namespace Arbor.Tooler.Tests.Integration
             _output = output;
         }
 
-        private ITestOutputHelper _output;
+        private readonly ITestOutputHelper _output;
 
-        [Fact(Skip = "Environment dependent")]
+        [Fact]
         public async Task ItShouldHaveDownloadedTheLatestVersion()
         {
-            var installer = new NuGetPackageInstaller();
+            using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
+                .MinimumLevel
+                .Verbose()
+                .CreateLogger();
 
-            NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync("Arbor.X").ConfigureAwait(false);
+            var installer = new NuGetPackageInstaller(logger: testLogger);
+
+            NuGetPackageInstallResult nuGetPackageInstallResult =
+                await installer.InstallPackageAsync("Arbor.Xdt").ConfigureAwait(false);
+
+            Assert.NotNull(nuGetPackageInstallResult);
+            Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
+            Assert.Equal("0.2.4", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
 
             _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
             _output.WriteLine(nuGetPackageInstallResult.PackageDirectory.FullName);
             _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
-            Assert.Equal("2.2.5", nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
+            await Task.Delay(TimeSpan.FromSeconds(3));
         }
     }
 }
