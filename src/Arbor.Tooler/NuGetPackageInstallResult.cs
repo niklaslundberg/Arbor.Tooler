@@ -36,7 +36,8 @@ namespace Arbor.Tooler
 
         public override string ToString()
         {
-            return $"{nameof(NuGetPackageId)}: {NuGetPackageId}, {nameof(SemanticVersion)}: {SemanticVersion?.ToNormalizedString()}, {nameof(PackageDirectory)}: {PackageDirectory?.FullName}";
+            return
+                $"{nameof(NuGetPackageId)}: {NuGetPackageId}, {nameof(SemanticVersion)}: {SemanticVersion?.ToNormalizedString()}, {nameof(PackageDirectory)}: {PackageDirectory?.FullName}";
         }
     }
 }

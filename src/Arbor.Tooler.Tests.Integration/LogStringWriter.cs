@@ -9,9 +9,19 @@ namespace Arbor.Tooler.Tests.Integration
     {
         private readonly Action<string> _logAction;
 
+        private readonly List<string> _buffer = new List<string>();
+
         public LogStringWriter(Action<string> logAction)
         {
             _logAction = logAction;
+        }
+
+        private void DoFlush()
+        {
+            if (_buffer.Count > 0)
+            {
+                _logAction?.Invoke(string.Join("", _buffer));
+            }
         }
 
         public override void WriteLine(string message)
@@ -24,13 +34,11 @@ namespace Arbor.Tooler.Tests.Integration
             _logAction?.Invoke(string.Format(message, args));
         }
 
-        private List<string> _buffer = new List<string>();
-
         public override void Write(string message)
         {
             if (message.Contains(Environment.NewLine))
             {
-                _logAction?.Invoke(string.Join("", _buffer) +  message);
+                _logAction?.Invoke(string.Join("", _buffer) + message);
             }
             else
             {
@@ -43,14 +51,6 @@ namespace Arbor.Tooler.Tests.Integration
             DoFlush();
 
             base.Flush();
-        }
-
-        private void DoFlush()
-        {
-            if (_buffer.Count > 0)
-            {
-                _logAction?.Invoke(string.Join("", _buffer));
-            }
         }
 
         public override async Task FlushAsync()

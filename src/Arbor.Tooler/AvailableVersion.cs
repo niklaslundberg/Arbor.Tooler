@@ -18,7 +18,8 @@ namespace Arbor.Tooler
 
         public override string ToString()
         {
-            return $"{nameof(DownloadUrl)}: {DownloadUrl}, {nameof(SemanticVersion)}: {SemanticVersion.ToNormalizedString()}";
+            return
+                $"{nameof(DownloadUrl)}: {DownloadUrl}, {nameof(SemanticVersion)}: {SemanticVersion.ToNormalizedString()}";
         }
     }
 }

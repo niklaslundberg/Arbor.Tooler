@@ -65,21 +65,6 @@ namespace Arbor.Tooler
             return true;
         }
 
-        public bool Equals(NuGetPackageVersion other)
-        {
-            if (other is null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return string.Equals(Version, other.Version, StringComparison.OrdinalIgnoreCase);
-        }
-
         public override bool Equals(object obj)
         {
             if (obj is null)
@@ -108,6 +93,21 @@ namespace Arbor.Tooler
             }
 
             return $"[{Version}]";
+        }
+
+        public bool Equals(NuGetPackageVersion other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return string.Equals(Version, other.Version, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

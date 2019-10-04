@@ -32,6 +32,168 @@ namespace Arbor.Tooler
             _logger = logger ?? Logger.None;
         }
 
+        private async Task<SemanticVersion> GetLatestVersionAsync(
+            string packageId,
+            string nugetExePath,
+            string nuGetSource = null,
+            bool allowPreRelease = false,
+            string prefix = "packageid:",
+            int maxBuildTimeInSeconds = 30,
+            string nugetConfig = null)
+        {
+            using (var cancellationTokenSource =
+                new CancellationTokenSource(TimeSpan.FromSeconds(maxBuildTimeInSeconds)))
+            {
+                var nugetArguments = new List<string> { "list", $"{prefix}{packageId}" };
+
+                if (!string.IsNullOrWhiteSpace(nuGetSource))
+                {
+                    nugetArguments.Add("-source");
+                    nugetArguments.Add(nuGetSource);
+                }
+
+                if (!string.IsNullOrWhiteSpace(nugetConfig))
+                {
+                    nugetArguments.Add("-ConfigFile");
+                    nugetArguments.Add(nugetConfig);
+                }
+
+                if (allowPreRelease)
+                {
+                    nugetArguments.Add("-Prerelease");
+                }
+
+                var lines = new List<string>();
+
+                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
+                    nugetExePath,
+                    nugetArguments,
+                    (message, category) =>
+                    {
+                        _logger.Information("{Category} {Message}", message, category);
+                        lines.Add(message);
+                    },
+                    (message, category) => { _logger.Error("{Category} {Message}", message, category); },
+                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
+                    verboseAction: (message, category) =>
+                    {
+                        _logger.Verbose("{Category} {Message}", message, category);
+                    },
+                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
+                    cancellationToken: cancellationTokenSource.Token);
+
+                if (!exitCode.IsSuccess)
+                {
+                    return null;
+                }
+
+                string whatToFind = packageId + " ";
+                SemanticVersion[] matchingPackages =
+                    lines.Where(line => line.StartsWith(whatToFind, StringComparison.OrdinalIgnoreCase))
+                        .Select(line => line.Substring(whatToFind.Length))
+                        .Select(line => (SemanticVersion.TryParse(line, out SemanticVersion semVer), semVer))
+                        .Where(s => s.Item1)
+                        .Select(s => s.semVer)
+                        .ToArray();
+
+                if (matchingPackages.Length == 0)
+                {
+                    if (!string.IsNullOrWhiteSpace(prefix))
+                    {
+                        return await GetLatestVersionAsync(packageId,
+                            nugetExePath,
+                            nuGetSource,
+                            allowPreRelease,
+                            "",
+                            maxBuildTimeInSeconds,
+                            nugetConfig);
+                    }
+                }
+
+                if (matchingPackages.Length == 1)
+                {
+                    return matchingPackages.Single();
+                }
+
+                return matchingPackages.Max();
+            }
+        }
+
+        private static (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) GetDownloadedPackage(
+            NuGetPackage nugetPackage,
+            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] downloadedPackages)
+        {
+            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) downloadedPackage =
+                downloadedPackages.SingleOrDefault(package =>
+                    package.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion
+                    && package.Directory.EnumerateFiles("*.nupkg", SearchOption.AllDirectories).Any());
+
+            return downloadedPackage;
+        }
+
+        private (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] GetDownloadedPackages(
+            NugetPackageSettings nugetPackageSettings,
+            DirectoryInfo packageBaseDir)
+        {
+            IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> versionDirectories =
+                packageBaseDir.EnumerateDirectories()
+                    .Select(dir =>
+                    {
+                        bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
+
+                        return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
+                    })
+                    .Where(tuple => tuple.Parsed
+                                    && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
+
+            IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> filtered =
+                versionDirectories;
+
+            if (!nugetPackageSettings.AllowPreRelease)
+            {
+                _logger.Debug("Filtering out pre-release versions in package directory '{PackageDirectory}'",
+                    packageBaseDir);
+                filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
+            }
+
+            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[]
+                filteredArray = filtered.ToArray();
+
+            return filteredArray;
+        }
+
+        private async Task<string> GetNuGetExePathAsync(
+            HttpClient httpClient = default,
+            CancellationToken cancellationToken = default)
+        {
+            if (!string.IsNullOrWhiteSpace(_nugetCliSettings.NuGetExePath)
+                && File.Exists(_nugetCliSettings.NuGetExePath))
+            {
+                return _nugetCliSettings.NuGetExePath;
+            }
+
+            NuGetDownloadResult nugetDownloadResult =
+                await _nugetDownloadClient.DownloadNuGetAsync(_nugetDownloadSettings,
+                    _logger,
+                    httpClient,
+                    cancellationToken).ConfigureAwait(false);
+
+            if (!nugetDownloadResult.Succeeded)
+            {
+                if (nugetDownloadResult.Exception is null)
+                {
+                    throw new InvalidOperationException(
+                        $"Could not download nuget.exe, {nugetDownloadResult.Result}");
+                }
+
+                throw new InvalidOperationException(
+                    $"Could not download nuget.exe, {nugetDownloadResult.Result}",
+                    nugetDownloadResult.Exception);
+            }
+
+            return nugetDownloadResult.NuGetExePath;
+        }
+
         public Task<NuGetPackageInstallResult> InstallPackageAsync(
             string package,
             CancellationToken cancellationToken = default)
@@ -118,7 +280,8 @@ namespace Arbor.Tooler
             {
                 if (!File.Exists(nugetPackageSettings.NugetConfigFile))
                 {
-                    _logger.Error("The specified NuGetConfig file {NuGetConfigFile} does not exist", nugetPackageSettings.NugetConfigFile);
+                    _logger.Error("The specified NuGetConfig file {NuGetConfigFile} does not exist",
+                        nugetPackageSettings.NugetConfigFile);
                     return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
@@ -183,14 +346,8 @@ namespace Arbor.Tooler
                 ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
                     nugetExePath,
                     arguments,
-                    standardOutLog: (message, category) =>
-                    {
-                        _logger.Information("{Category} {Message}", message, category);
-                    },
-                    standardErrorAction: (message, category) =>
-                    {
-                        _logger.Error("{Category} {Message}", message, category);
-                    },
+                    (message, category) => { _logger.Information("{Category} {Message}", message, category); },
+                    (message, category) => { _logger.Error("{Category} {Message}", message, category); },
                     debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
                     verboseAction: (message, category) =>
                     {
@@ -319,171 +476,6 @@ namespace Arbor.Tooler
                     nugetPackageFileSemanticVersion,
                     targetPackageDirectory);
             }
-        }
-
-        private async Task<SemanticVersion> GetLatestVersionAsync(
-            string packageId,
-            string nugetExePath,
-            string nuGetSource = null,
-            bool allowPreRelease = false,
-            string prefix = "packageid:",
-            int maxBuildTimeInSeconds = 30,
-            string nugetConfig = null)
-        {
-            using (var cancellationTokenSource =
-                new CancellationTokenSource(TimeSpan.FromSeconds(maxBuildTimeInSeconds)))
-            {
-                var nugetArguments = new List<string> { "list", $"{prefix}{packageId}" };
-
-                if (!string.IsNullOrWhiteSpace(nuGetSource))
-                {
-                    nugetArguments.Add("-source");
-                    nugetArguments.Add(nuGetSource);
-                }
-
-                if (!string.IsNullOrWhiteSpace(nugetConfig))
-                {
-                    nugetArguments.Add("-ConfigFile");
-                    nugetArguments.Add(nugetConfig);
-                }
-
-                if (allowPreRelease)
-                {
-                    nugetArguments.Add("-Prerelease");
-                }
-
-                var lines = new List<string>();
-
-                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
-                    nugetExePath,
-                    nugetArguments,
-                    standardOutLog: (message, category) =>
-                    {
-                        _logger.Information("{Category} {Message}", message, category);
-                        lines.Add(message);
-                    },
-                    standardErrorAction: (message, category) =>
-                    {
-                        _logger.Error("{Category} {Message}", message, category);
-                    },
-                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
-                    verboseAction: (message, category) =>
-                    {
-                        _logger.Verbose("{Category} {Message}", message, category);
-                    },
-                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
-                    cancellationToken: cancellationTokenSource.Token);
-
-                if (!exitCode.IsSuccess)
-                {
-                    return null;
-                }
-
-                string whatToFind = packageId + " ";
-                SemanticVersion[] matchingPackages =
-                    lines.Where(line => line.StartsWith(whatToFind, StringComparison.OrdinalIgnoreCase))
-                        .Select(line => line.Substring(whatToFind.Length))
-                        .Select(line => (SemanticVersion.TryParse(line, out SemanticVersion semVer), semVer))
-                        .Where(s => s.Item1)
-                        .Select(s => s.semVer)
-                        .ToArray();
-
-                if (matchingPackages.Length == 0)
-                {
-                    if (!string.IsNullOrWhiteSpace(prefix))
-                    {
-                        return await GetLatestVersionAsync(packageId,
-                            nugetExePath,
-                            nuGetSource,
-                            allowPreRelease,
-                            prefix: "",
-                            maxBuildTimeInSeconds,
-                            nugetConfig: nugetConfig);
-                    }
-                }
-
-                if (matchingPackages.Length == 1)
-                {
-                    return matchingPackages.Single();
-                }
-
-                return matchingPackages.Max();
-            }
-        }
-
-        private static (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) GetDownloadedPackage(
-            NuGetPackage nugetPackage,
-            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] downloadedPackages)
-        {
-            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) downloadedPackage =
-                downloadedPackages.SingleOrDefault(package =>
-                    package.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion
-                    && package.Directory.EnumerateFiles("*.nupkg", SearchOption.AllDirectories).Any());
-
-            return downloadedPackage;
-        }
-
-        private (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] GetDownloadedPackages(
-            NugetPackageSettings nugetPackageSettings,
-            DirectoryInfo packageBaseDir)
-        {
-            IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> versionDirectories =
-                packageBaseDir.EnumerateDirectories()
-                    .Select(dir =>
-                    {
-                        bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
-
-                        return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
-                    })
-                    .Where(tuple => tuple.Parsed
-                                    && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
-
-            IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> filtered =
-                versionDirectories;
-
-            if (!nugetPackageSettings.AllowPreRelease)
-            {
-                _logger.Debug("Filtering out pre-release versions in package directory '{PackageDirectory}'",
-                    packageBaseDir);
-                filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
-            }
-
-            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[]
-                filteredArray = filtered.ToArray();
-
-            return filteredArray;
-        }
-
-        private async Task<string> GetNuGetExePathAsync(
-            HttpClient httpClient = default,
-            CancellationToken cancellationToken = default)
-        {
-            if (!string.IsNullOrWhiteSpace(_nugetCliSettings.NuGetExePath)
-                && File.Exists(_nugetCliSettings.NuGetExePath))
-            {
-                return _nugetCliSettings.NuGetExePath;
-            }
-
-            NuGetDownloadResult nugetDownloadResult =
-                await _nugetDownloadClient.DownloadNuGetAsync(_nugetDownloadSettings,
-                    _logger,
-                    httpClient,
-                    cancellationToken).ConfigureAwait(false);
-
-            if (!nugetDownloadResult.Succeeded)
-            {
-                if (nugetDownloadResult.Exception is null)
-                {
-                    throw new InvalidOperationException(
-                        $"Could not download nuget.exe, {nugetDownloadResult.Result}");
-                }
-
-                throw new InvalidOperationException(
-                    $"Could not download nuget.exe, {nugetDownloadResult.Result}",
-                    nugetDownloadResult.Exception);
-            }
-
-            return nugetDownloadResult.NuGetExePath;
         }
     }
 }

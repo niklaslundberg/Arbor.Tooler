@@ -1,11 +1,15 @@
 ﻿using System;
 using System.IO;
+using Serilog;
 
 namespace Arbor.Tooler
 {
     internal static class DirectoryHelper
     {
-        public static string UserLocalAppDataDirectory() => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        public static string UserLocalAppDataDirectory()
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        }
 
         public static DirectoryInfo FromPathSegments(string first, params string[] otherParts)
         {
@@ -41,7 +45,10 @@ namespace Arbor.Tooler
             return directoryInfo;
         }
 
-        public static void CopyRecursiveTo(this DirectoryInfo sourceDirectory, DirectoryInfo targetDirectory, Serilog.ILogger logger = null)
+        public static void CopyRecursiveTo(
+            this DirectoryInfo sourceDirectory,
+            DirectoryInfo targetDirectory,
+            ILogger logger = null)
         {
             if (targetDirectory == null)
             {

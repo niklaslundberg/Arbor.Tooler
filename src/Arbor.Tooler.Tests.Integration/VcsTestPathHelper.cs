@@ -1,15 +1,16 @@
 ﻿using System.IO;
 using Arbor.Aesculus.Core;
+using NCrunch.Framework;
 
-namespace Arbor.Tooler.ConsoleClient
+namespace Arbor.Tooler.Tests.Integration
 {
     public static class VcsTestPathHelper
     {
         public static string FindVcsRootPath()
         {
-            if (NCrunch.Framework.NCrunchEnvironment.NCrunchIsResident())
+            if (NCrunchEnvironment.NCrunchIsResident())
             {
-                string originalSolutionPath = NCrunch.Framework.NCrunchEnvironment.GetOriginalSolutionPath();
+                string originalSolutionPath = NCrunchEnvironment.GetOriginalSolutionPath();
 
                 var fileInfo = new FileInfo(originalSolutionPath);
 

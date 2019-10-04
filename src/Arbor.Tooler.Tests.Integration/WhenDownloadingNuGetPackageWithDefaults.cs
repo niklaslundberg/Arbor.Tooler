@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Arbor.Tooler.ConsoleClient;
 using Serilog;
 using Serilog.Core;
 using Xunit;
@@ -44,7 +43,8 @@ namespace Arbor.Tooler.Tests.Integration
 
                             string nugetSource = "LocalToolerTest";
 
-                            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile, nugetSourceName: nugetSource);
+                            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile,
+                                nugetSourceName: nugetSource);
                             var nugetDownloadClient = new NuGetDownloadClient();
 
                             var installer =
@@ -55,7 +55,9 @@ namespace Arbor.Tooler.Tests.Integration
 
                             var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
                                 NuGetPackageVersion.LatestAvailable);
-                            var nugetPackageSettings = new NugetPackageSettings(false, nugetConfigFile: nugetConfigFile, nugetSource: nugetSource);
+                            var nugetPackageSettings = new NugetPackageSettings(false,
+                                nugetConfigFile: nugetConfigFile,
+                                nugetSource: nugetSource);
 
                             DirectoryInfo installBaseDirectory = packagesTempDir.Directory;
 
