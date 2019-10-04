@@ -54,7 +54,7 @@ namespace Arbor.Tooler
 
             DirectoryInfo fallbackDirectory = DirectoryHelper.FromPathSegments(
                 DirectoryHelper.UserLocalAppDataDirectory(),
-               "Arbor.Tooler",
+                "Arbor.Tooler",
                 "packages");
 
             DirectoryInfo packageInstallBaseDirectory = (installBaseDirectory ?? fallbackDirectory).EnsureExists();
@@ -164,7 +164,9 @@ namespace Arbor.Tooler
                 _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
 
 
-                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(nugetExePath, arguments,
+                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
+                    nugetExePath,
+                    arguments,
                     standardOutLog: (message, category) =>
                     {
                         _logger.Information("{Category} {Message}", message, category);
@@ -312,7 +314,7 @@ namespace Arbor.Tooler
             using (var cancellationTokenSource =
                 new CancellationTokenSource(TimeSpan.FromSeconds(MaxBuildTimeInSeconds)))
             {
-                var nugetArguments = new List<string> { "list", packageId };
+                var nugetArguments = new List<string> { "list", $"packageid:{packageId}" };
 
                 if (!string.IsNullOrWhiteSpace(nuGetSource))
                 {
@@ -328,7 +330,9 @@ namespace Arbor.Tooler
                 var lines = new List<string>();
 
 
-                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(nugetExePath, nugetArguments,
+                ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
+                    nugetExePath,
+                    nugetArguments,
                     standardOutLog: (message, category) =>
                     {
                         _logger.Information("{Category} {Message}", message, category);
@@ -371,7 +375,6 @@ namespace Arbor.Tooler
                 }
 
                 return matchingPackages.Max();
-
             }
         }
 
