@@ -10,11 +10,13 @@ namespace Arbor.Tooler
         public NuGetCliSettings(
             string nugetSourceName = null,
             string nugetConfigFile = null,
-            string nuGetExePath = null)
+            string nuGetExePath = null,
+            bool adaptivePackagePrefixEnabled = true)
         {
             NugetSourceName = nugetSourceName;
             NugetConfigFile = nugetConfigFile;
             NuGetExePath = nuGetExePath;
+            AdaptivePackagePrefixEnabled = adaptivePackagePrefixEnabled;
         }
 
         public string NugetSourceName { get; }
@@ -22,6 +24,8 @@ namespace Arbor.Tooler
         public string NugetConfigFile { get; }
 
         public string NuGetExePath { get; }
+
+        public bool AdaptivePackagePrefixEnabled { get; }
 
         public static NuGetCliSettings Default => _Default.Value;
 

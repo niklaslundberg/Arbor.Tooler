@@ -32,7 +32,7 @@ namespace Arbor.Tooler
 
                 bool owsClient = httpClient is null;
 
-                httpClient = httpClient ?? new HttpClient();
+                httpClient ??= new HttpClient();
 
                 try
                 {
@@ -332,7 +332,7 @@ namespace Arbor.Tooler
 
             bool ownsClient = httpClient is null;
 
-            httpClient = httpClient ?? new HttpClient();
+            httpClient ??= new HttpClient();
 
             try
             {
