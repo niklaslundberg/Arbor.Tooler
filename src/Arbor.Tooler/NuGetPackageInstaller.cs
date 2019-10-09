@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -22,7 +23,7 @@ namespace Arbor.Tooler
         private readonly NuGetCliSettings _nugetCliSettings;
         private readonly NuGetDownloadClient _nugetDownloadClient;
         private readonly NuGetDownloadSettings _nugetDownloadSettings;
-        private bool _prefixEnabled = true;
+        private readonly ConcurrentDictionary<string, bool> _prefixEnabled = new ConcurrentDictionary<string, bool>();
 
         public NuGetPackageInstaller(
             NuGetDownloadClient nugetDownloadClient = null,
@@ -71,7 +72,7 @@ namespace Arbor.Tooler
             int? timeoutInSeconds = 30,
             string nugetConfig = null)
         {
-            if (!_prefixEnabled)
+            if (!IsPrefixEnabled(nugetConfig, nuGetSource))
             {
                 prefix = default;
             }
@@ -156,7 +157,7 @@ namespace Arbor.Tooler
                     if (allVersions.Length > 0)
                     {
                         _logger.Debug("Found {Count} versions of {PackageId} when removing prefix", allVersions.Length, packageId.PackageId);
-                        _prefixEnabled = false;
+                        DisablePrefix(nugetConfig, nuGetSource);
                     }
 
                     return allVersions;
@@ -164,6 +165,31 @@ namespace Arbor.Tooler
             }
 
             return matchingPackages.ToImmutableArray();
+        }
+
+        private void DisablePrefix(string nugetConfig, string nuGetSource)
+        {
+            string key = GetConfigSourceKey(nugetConfig, nuGetSource);
+            _prefixEnabled.TryRemove(key, out bool _);
+
+            _prefixEnabled.TryAdd(key, false);
+        }
+
+        private bool IsPrefixEnabled(string nugetConfig, string nuGetSource)
+        {
+            string key = GetConfigSourceKey(nugetConfig, nuGetSource);
+
+            if (!_prefixEnabled.TryGetValue(key, out bool enabled))
+            {
+                return true;
+            }
+
+            return enabled;
+        }
+
+        private string GetConfigSourceKey(string nugetConfig, string nuGetSource)
+        {
+            return $"{nugetConfig}_$$$_{nuGetSource}";
         }
 
         private static (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) GetDownloadedPackage(
