@@ -21,7 +21,7 @@ namespace Arbor.Tooler.Tests.Integration
 
             if (!string.IsNullOrWhiteSpace(message))
             {
-                _logAction(DateTimeOffset.Now + " " + message);
+                _logAction($"{DateTimeOffset.Now} [{logEvent.Level}] {message}");
             }
             else
             {

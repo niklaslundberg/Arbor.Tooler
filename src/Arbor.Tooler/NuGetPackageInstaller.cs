@@ -23,7 +23,7 @@ namespace Arbor.Tooler
         private readonly NuGetCliSettings _nugetCliSettings;
         private readonly NuGetDownloadClient _nugetDownloadClient;
         private readonly NuGetDownloadSettings _nugetDownloadSettings;
-        private readonly ConcurrentDictionary<string, bool> _prefixEnabled = new ConcurrentDictionary<string, bool>();
+        private readonly ConcurrentDictionary<string, string> _sourcePrefixes = new ConcurrentDictionary<string, string>();
 
         public NuGetPackageInstaller(
             NuGetDownloadClient nugetDownloadClient = null,
@@ -72,9 +72,12 @@ namespace Arbor.Tooler
             int? timeoutInSeconds = 30,
             string nugetConfig = null)
         {
-            if (!IsPrefixEnabled(nugetConfig, nuGetSource))
+            if (_nugetCliSettings.AdaptivePackagePrefixEnabled)
             {
-                prefix = default;
+                if (prefix is null)
+                {
+                    prefix = GetPrefix(nugetConfig, nuGetSource);
+                }
             }
 
             using var tokenSource = timeoutInSeconds > 0
@@ -102,31 +105,70 @@ namespace Arbor.Tooler
 
             if (string.IsNullOrWhiteSpace(nugetExePath))
             {
-                _logger.Debug("nuget.exe path is not specified when getting all package versions for {PackageId}", packageId.PackageId);
+                _logger.Debug("nuget.exe path is not specified when getting all package versions for {PackageId}",
+                    packageId.PackageId);
                 nugetExePath = await GetNuGetExePathAsync(cancellationToken: tokenSource.Token);
             }
 
-            var lines = new List<string>();
+            _logger.Information("Getting available versions of package id {PackageId}", packageId.PackageId);
 
-            ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
-                nugetExePath,
-                nugetArguments,
-                (message, category) =>
+            var lines = new List<string>();
+            ExitCode exitCode;
+            try
+            {
+                exitCode = await ProcessRunner.ExecuteProcessAsync(
+                    nugetExePath,
+                    nugetArguments,
+                    (message, category) =>
+                    {
+                        _logger.Debug("{Category} {Message}", message, category);
+                        lines.Add(message);
+
+                        if (lines.Count > 10 && !lines.Any(line =>
+                                line.IndexOf(packageId.PackageId, StringComparison.OrdinalIgnoreCase) >= 0))
+                        {
+                            _logger.Warning("Got packages with other IDs than {PackageId}, aborting package version listing",
+                                packageId.PackageId);
+                            tokenSource.Cancel();
+                        }
+                    },
+                    (message, category) => { _logger.Error("{Category} {Message}", message, category); },
+                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
+                    verboseAction: (message, category) =>
+                    {
+                        _logger.Verbose("{Category} {Message}", message, category);
+                    },
+                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
+                    cancellationToken: tokenSource.Token);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Could not get versions for package id {PackageId}", packageId.PackageId);
+
+                if (_nugetCliSettings.AdaptivePackagePrefixEnabled && string.IsNullOrWhiteSpace(prefix))
                 {
-                    _logger.Information("{Category} {Message}", message, category);
-                    lines.Add(message);
-                },
-                (message, category) => { _logger.Error("{Category} {Message}", message, category); },
-                debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
-                verboseAction: (message, category) =>
-                {
-                    _logger.Verbose("{Category} {Message}", message, category);
-                },
-                toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
-                cancellationToken: tokenSource.Token);
+                    ImmutableArray<SemanticVersion> allVersionsWithPrefix = await GetAllVersionsAsync(
+                        packageId,
+                        nugetExePath,
+                        nuGetSource,
+                        allowPreRelease,
+                        DefaultPrefixPackageId,
+                        timeoutInSeconds,
+                        nugetConfig);
+
+                    if (allVersionsWithPrefix.Length > 0)
+                    {
+                        SetPrefix(nugetConfig, nuGetSource, DefaultPrefixPackageId);
+                        return allVersionsWithPrefix;
+                    }
+                }
+
+                return ImmutableArray<SemanticVersion>.Empty;
+            }
 
             if (!exitCode.IsSuccess)
             {
+                _logger.Warning("Package listing failed with exit code {ExitCode}", exitCode);
                 return ImmutableArray<SemanticVersion>.Empty;
             }
 
@@ -157,7 +199,7 @@ namespace Arbor.Tooler
                     if (allVersions.Length > 0)
                     {
                         _logger.Debug("Found {Count} versions of {PackageId} when removing prefix", allVersions.Length, packageId.PackageId);
-                        DisablePrefix(nugetConfig, nuGetSource);
+                        SetPrefix(nugetConfig, nuGetSource, "");
                     }
 
                     return allVersions;
@@ -167,24 +209,24 @@ namespace Arbor.Tooler
             return matchingPackages.ToImmutableArray();
         }
 
-        private void DisablePrefix(string nugetConfig, string nuGetSource)
+        private void SetPrefix(string nugetConfig, string nuGetSource, string prefix)
         {
             string key = GetConfigSourceKey(nugetConfig, nuGetSource);
-            _prefixEnabled.TryRemove(key, out bool _);
+            _sourcePrefixes.TryRemove(key, out string _);
 
-            _prefixEnabled.TryAdd(key, false);
+            _sourcePrefixes.TryAdd(key, prefix);
         }
 
-        private bool IsPrefixEnabled(string nugetConfig, string nuGetSource)
+        private string GetPrefix(string nugetConfig, string nuGetSource)
         {
             string key = GetConfigSourceKey(nugetConfig, nuGetSource);
 
-            if (!_prefixEnabled.TryGetValue(key, out bool enabled))
+            if (!_sourcePrefixes.TryGetValue(key, out string prefix))
             {
-                return true;
+                return "";
             }
 
-            return enabled;
+            return prefix;
         }
 
         private string GetConfigSourceKey(string nugetConfig, string nuGetSource)
@@ -314,10 +356,12 @@ namespace Arbor.Tooler
                     (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) latest =
                         downloadedPackages.OrderByDescending(version => version.SemanticVersion).First();
 
-                    _logger.Debug("Found existing version {ExistingVersion}",
+                    _logger.Debug(
+                        "Found existing version {ExistingVersion}",
                         latest.SemanticVersion.ToNormalizedString());
 
-                    return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+                    return new NuGetPackageInstallResult(
+                        nugetPackage.NuGetPackageId,
                         latest.SemanticVersion,
                         latest.Directory);
                 }
@@ -332,9 +376,11 @@ namespace Arbor.Tooler
 
                 if (downloadedPackage != default)
                 {
-                    _logger.Debug("Found specific version {Package}, version {Version}",
+                    _logger.Debug(
+                        "Found specific version {Package}, version {Version}",
                         nugetPackage.NuGetPackageId.PackageId,
                         nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
+
                     return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
                         downloadedPackage.SemanticVersion,
                         downloadedPackage.Directory);
@@ -373,21 +419,6 @@ namespace Arbor.Tooler
                 arguments.Add("-Version");
                 arguments.Add(nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
             }
-            else
-            {
-                SemanticVersion latestVersion = await GetLatestVersionAsync(
-                    nugetPackage.NuGetPackageId,
-                    nugetExePath,
-                    allowPreRelease: nugetPackageSettings.AllowPreRelease,
-                    nugetConfig: nugetPackageSettings.NugetConfigFile,
-                    nuGetSource: nugetPackageSettings.NugetSource);
-
-                if (latestVersion is object)
-                {
-                    arguments.Add("-Version");
-                    arguments.Add(latestVersion.ToNormalizedString());
-                }
-            }
 
             if (nugetPackageSettings.AllowPreRelease)
             {
@@ -423,7 +454,6 @@ namespace Arbor.Tooler
                 },
                 toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
                 cancellationToken: cancellationToken);
-
 
             if (!exitCode.IsSuccess)
             {
@@ -508,7 +538,7 @@ namespace Arbor.Tooler
             }
 
             DirectoryInfo[] directoryInfos = tempDirectory.Directory.GetDirectories()
-                .Where(dir => dir.Name.StartsWith(nugetPackage.NuGetPackageId.PackageId + "."))
+                .Where(dir => dir.Name.StartsWith($"{nugetPackage.NuGetPackageId.PackageId}."))
                 .ToArray();
 
             if (directoryInfos.Length != 1)
@@ -527,8 +557,10 @@ namespace Arbor.Tooler
 
             targetPackageDirectory.EnsureExists();
 
-            string[] files = workDir.GetFiles("", SearchOption.AllDirectories)
-                .Select(file => file.FullName).ToArray();
+            string[] files = workDir
+                .GetFiles("", SearchOption.AllDirectories)
+                .Select(file => file.FullName)
+                .ToArray();
 
             _logger.Debug("Found package files {Files}", files);
 
@@ -540,7 +572,8 @@ namespace Arbor.Tooler
 
             workDir.CopyRecursiveTo(targetPackageDirectory, _logger);
 
-            return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+            return new NuGetPackageInstallResult(
+                nugetPackage.NuGetPackageId,
                 nugetPackageFileSemanticVersion,
                 targetPackageDirectory);
         }
