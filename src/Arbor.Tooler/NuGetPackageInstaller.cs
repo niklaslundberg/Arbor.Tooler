@@ -63,7 +63,7 @@ namespace Arbor.Tooler
             return allVersions.Max();
         }
 
-        public async Task<ImmutableArray<SemanticVersion>> GetAllVersionsAsync(
+        public Task<ImmutableArray<SemanticVersion>> GetAllVersionsAsync(
             NuGetPackageId packageId,
             string nugetExePath = null,
             string nuGetSource = null,
@@ -71,6 +71,26 @@ namespace Arbor.Tooler
             string prefix = DefaultPrefixPackageId,
             int? timeoutInSeconds = 30,
             string nugetConfig = null)
+        {
+            return GetAllVersionsInternalAsync(packageId,
+                nugetExePath,
+                nuGetSource,
+                allowPreRelease,
+                prefix,
+                timeoutInSeconds,
+                nugetConfig,
+                true);
+        }
+
+        private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsInternalAsync(
+            NuGetPackageId packageId,
+            string nugetExePath = null,
+            string nuGetSource = null,
+            bool allowPreRelease = false,
+            string prefix = default,
+            int? timeoutInSeconds = default,
+            string nugetConfig = null,
+            bool firstAttempt = true)
         {
             if (_nugetCliSettings.AdaptivePackagePrefixEnabled)
             {
@@ -112,8 +132,10 @@ namespace Arbor.Tooler
 
             _logger.Information("Getting available versions of package id {PackageId}", packageId.PackageId);
 
+            var ignoredOutputStatements = new List<string> { "Using credentials", "No packages found", "MSBuild auto-detection" };
             var lines = new List<string>();
             ExitCode exitCode;
+            bool isExplicitlyCancelledWithPackageIdMismatch = false;
             try
             {
                 exitCode = await ProcessRunner.ExecuteProcessAsync(
@@ -121,22 +143,33 @@ namespace Arbor.Tooler
                     nugetArguments,
                     (message, category) =>
                     {
-                        _logger.Debug("{Category} {Message}", message, category);
+                        _logger.Verbose("{Category} {Message}", category, message);
                         lines.Add(message);
 
-                        if (lines.Count > 10 && !lines.Any(line =>
-                                line.IndexOf(packageId.PackageId, StringComparison.OrdinalIgnoreCase) >= 0))
+                        var packageLines = lines.Where(line =>
+                            !ignoredOutputStatements.Any(ignored =>
+                                line.IndexOf(ignored, StringComparison.OrdinalIgnoreCase) >= 0)).ToArray();
+
+                        var packageLineCount = packageLines.Length;
+
+                        if (packageLineCount > 5)
                         {
-                            _logger.Warning("Got packages with other IDs than {PackageId}, aborting package version listing",
-                                packageId.PackageId);
-                            tokenSource.Cancel();
+                            if (packageLines.Any(line =>
+                                !line.StartsWith(packageId.PackageId, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                _logger.Warning(
+                                    "Got packages with other IDs than {PackageId}, aborting package version listing",
+                                    packageId.PackageId);
+                                isExplicitlyCancelledWithPackageIdMismatch = true;
+                                tokenSource.Cancel();
+                            }
                         }
                     },
-                    (message, category) => { _logger.Error("{Category} {Message}", message, category); },
-                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
+                    (message, category) => { _logger.Error("{Category} {Message}", category, message); },
+                    debugAction: (message, category) => { _logger.Debug("{Category} {Message}", category, message); },
                     verboseAction: (message, category) =>
                     {
-                        _logger.Verbose("{Category} {Message}", message, category);
+                        _logger.Verbose("{Category} {Message}", category, message);
                     },
                     toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
                     cancellationToken: tokenSource.Token);
@@ -145,16 +178,20 @@ namespace Arbor.Tooler
             {
                 _logger.Warning(ex, "Could not get versions for package id {PackageId}", packageId.PackageId);
 
-                if (_nugetCliSettings.AdaptivePackagePrefixEnabled && string.IsNullOrWhiteSpace(prefix))
+                if (isExplicitlyCancelledWithPackageIdMismatch
+                    && _nugetCliSettings.AdaptivePackagePrefixEnabled
+                    && string.IsNullOrWhiteSpace(prefix)
+                    && firstAttempt)
                 {
-                    ImmutableArray<SemanticVersion> allVersionsWithPrefix = await GetAllVersionsAsync(
+                    ImmutableArray<SemanticVersion> allVersionsWithPrefix = await GetAllVersionsInternalAsync(
                         packageId,
                         nugetExePath,
                         nuGetSource,
                         allowPreRelease,
                         DefaultPrefixPackageId,
                         timeoutInSeconds,
-                        nugetConfig);
+                        nugetConfig,
+                        false);
 
                     if (allVersionsWithPrefix.Length > 0)
                     {
@@ -172,41 +209,87 @@ namespace Arbor.Tooler
                 return ImmutableArray<SemanticVersion>.Empty;
             }
 
-            string whatToFind = $"{packageId} ";
-            SemanticVersion[] matchingPackages =
-                lines.Where(line => line.StartsWith(whatToFind, StringComparison.OrdinalIgnoreCase))
-                    .Select(line => line.Substring(whatToFind.Length))
-                    .Select(line => (Parsed: SemanticVersion.TryParse(line, out SemanticVersion semVer), SemanticVersion: semVer))
-                    .Where(tuple => tuple.Parsed)
-                    .Select(tuple => tuple.SemanticVersion)
-                    .ToArray();
+            var included = lines
+                .Where(line => line != null && !ignoredOutputStatements
+                                   .Any(ignored =>
+                                       line.IndexOf(ignored, StringComparison.InvariantCultureIgnoreCase) >= 0))
+                .ToList();
 
-            if (matchingPackages.Length == 0 && _nugetCliSettings.AdaptivePackagePrefixEnabled)
-            {
-                if (!string.IsNullOrWhiteSpace(prefix))
-                {
-                    _logger.Debug("Getting all NuGet versions for {PackageId} without any prefix in search", packageId.PackageId);
-
-                    ImmutableArray<SemanticVersion> allVersions = await GetAllVersionsAsync(
-                        packageId,
-                        nugetExePath,
-                        nuGetSource,
-                        allowPreRelease,
-                        "",
-                        timeoutInSeconds,
-                        nugetConfig);
-
-                    if (allVersions.Length > 0)
+            var items = included.Select(
+                    package =>
                     {
-                        _logger.Debug("Found {Count} versions of {PackageId} when removing prefix", allVersions.Length, packageId.PackageId);
-                        SetPrefix(nugetConfig, nuGetSource, "");
-                    }
+                        var parts = package.Split(' ');
 
-                    return allVersions;
-                }
+                        var currentPackageId = parts[0];
+
+                        try
+                        {
+                            var version = parts.Last();
+
+                            if (!SemanticVersion.TryParse(version, out var semanticVersion))
+                            {
+                                _logger.Verbose(
+                                    "Found package version {Version} for package {Package}, skipping because it could not be parsed as semantic version",
+                                    version,
+                                    currentPackageId);
+                                return null;
+                            }
+
+                            if (!packageId.PackageId.Equals(currentPackageId, StringComparison.OrdinalIgnoreCase))
+                            {
+                                _logger.Verbose(
+                                    "Found package {Package}, skipping because it does match requested package {RequestedPackage}",
+                                    currentPackageId,
+                                    packageId);
+
+                                return null;
+                            }
+
+                            return new NuGetPackage(packageId, new NuGetPackageVersion(semanticVersion));
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Warning(ex, "Error parsing package '{Package}'", package);
+                            return null;
+                        }
+                    })
+                .Where(packageVersion => packageVersion != null)
+                .OrderBy(packageVersion => packageVersion.NuGetPackageId.PackageId)
+                .ThenByDescending(packageVersion => packageVersion.NuGetPackageVersion.SemanticVersion)
+                .ToImmutableArray();
+
+            foreach (NuGetPackage nuGetPackage in items)
+            {
+                _logger.Debug("Found package {PackageId} {PackageVersion}", nuGetPackage.NuGetPackageId.PackageId, nuGetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
             }
 
-            return matchingPackages.ToImmutableArray();
+            if (items.Length == 0
+                && _nugetCliSettings.AdaptivePackagePrefixEnabled
+                && !string.IsNullOrWhiteSpace(prefix)
+                && firstAttempt)
+            {
+                _logger.Debug("Could not find any package versions of {PackageId} when using prefix '{Prefix}', getting all NuGet versions without any prefix in search", packageId.PackageId, prefix);
+
+                ImmutableArray<SemanticVersion> allVersions = await GetAllVersionsInternalAsync(
+                    packageId,
+                    nugetExePath,
+                    nuGetSource,
+                    allowPreRelease,
+                    "",
+                    timeoutInSeconds,
+                    nugetConfig,
+                    false);
+
+                if (allVersions.Length > 0)
+                {
+                    _logger.Debug("Found {Count} versions of {PackageId} when removing prefix", allVersions.Length, packageId.PackageId);
+                    SetPrefix(nugetConfig, nuGetSource, "");
+                }
+
+                return allVersions;
+            }
+
+            return items.Select(item => item.NuGetPackageVersion.SemanticVersion).ToImmutableArray();
         }
 
         private void SetPrefix(string nugetConfig, string nuGetSource, string prefix)

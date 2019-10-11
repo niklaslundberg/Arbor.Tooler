@@ -9,7 +9,7 @@ namespace Arbor.Tooler
         public static readonly NuGetPackageVersion LatestAvailable = new NuGetPackageVersion("latest-available");
         public static readonly NuGetPackageVersion LatestDownloaded = new NuGetPackageVersion("latest-downloaded");
 
-        private NuGetPackageVersion(SemanticVersion semanticVersion)
+        public NuGetPackageVersion(SemanticVersion semanticVersion)
         {
             SemanticVersion = semanticVersion;
             Version = SemanticVersion.ToNormalizedString();
