@@ -11,12 +11,17 @@ namespace Arbor.Tooler
 
         public NuGetPackageVersion(SemanticVersion semanticVersion)
         {
-            SemanticVersion = semanticVersion;
+            SemanticVersion = semanticVersion ?? throw new ArgumentNullException(nameof(semanticVersion));
             Version = SemanticVersion.ToNormalizedString();
         }
 
         private NuGetPackageVersion(string version)
         {
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                throw new ArgumentException(nameof(version));
+            }
+
             SemanticVersion = null;
             Version = version;
         }
