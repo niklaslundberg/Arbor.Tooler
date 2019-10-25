@@ -104,7 +104,12 @@ namespace Arbor.Tooler
                 ? new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds.Value))
                 : new CancellationTokenSource();
 
-            var nugetArguments = new List<string> { "list", $"{prefix}{packageId}" };
+            var nugetArguments = new List<string>
+                {
+                    "list",
+                    $"{prefix}{packageId}",
+                    "-AllVersions"
+                };
 
             if (!string.IsNullOrWhiteSpace(nuGetSource))
             {
