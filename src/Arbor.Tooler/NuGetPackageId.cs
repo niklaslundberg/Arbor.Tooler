@@ -1,4 +1,6 @@
-﻿namespace Arbor.Tooler
+﻿using System;
+
+namespace Arbor.Tooler
 {
     public class NuGetPackageId
     {
@@ -6,7 +8,7 @@
         {
             if (string.IsNullOrWhiteSpace(packageId))
             {
-                throw new System.ArgumentNullException(nameof(packageId));
+                throw new ArgumentNullException(nameof(packageId));
             }
 
             PackageId = packageId;

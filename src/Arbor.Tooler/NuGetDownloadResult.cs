@@ -55,7 +55,8 @@ namespace Arbor.Tooler
 
         public override string ToString()
         {
-            return $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
+            return
+                $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
         }
     }
 }

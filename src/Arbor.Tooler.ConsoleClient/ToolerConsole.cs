@@ -18,6 +18,22 @@ namespace Arbor.Tooler.ConsoleClient
             _args = args ?? Array.Empty<string>();
         }
 
+        private void ShowUsage()
+        {
+            _logger.Information(
+                "Example usage: {Command} {Argument}{Separator}{ExampleArgument}",
+                "dotnet-arbor-tooler",
+                CommandExtensions.DownloadDirectory,
+                '=',
+                @"C:\Tools\NuGet");
+            _logger.Information(
+                "Example usage, default location: {Command} {Argument}{Separator}{DefaultArgument}",
+                "dotnet-arbor-tooler",
+                CommandExtensions.DownloadDirectory,
+                '=',
+                "default");
+        }
+
         public static ToolerConsole Create(string[] args)
         {
             Logger logger = new LoggerConfiguration()
@@ -26,16 +42,6 @@ namespace Arbor.Tooler.ConsoleClient
                 .CreateLogger();
 
             return new ToolerConsole(args, logger);
-        }
-
-        public void Dispose()
-        {
-            if (_logger is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-
-            _logger = null;
         }
 
         public async Task<int> RunAsync()
@@ -91,20 +97,14 @@ namespace Arbor.Tooler.ConsoleClient
             return exitCode;
         }
 
-        private void ShowUsage()
+        public void Dispose()
         {
-            _logger.Information(
-                "Example usage: {Command} {Argument}{Separator}{ExampleArgument}",
-                "dotnet-arbor-tooler",
-                CommandExtensions.DownloadDirectory,
-                '=',
-                @"C:\Tools\NuGet");
-            _logger.Information(
-                "Example usage, default location: {Command} {Argument}{Separator}{DefaultArgument}",
-                "dotnet-arbor-tooler",
-                CommandExtensions.DownloadDirectory,
-                '=',
-                "default");
+            if (_logger is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            _logger = null;
         }
     }
 }

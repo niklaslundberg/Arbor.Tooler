@@ -4,7 +4,7 @@ namespace Arbor.Tooler.ConsoleClient
 {
     internal static class Program
     {
-        static async Task<int> Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             int exitCode;
             using (ToolerConsole toolerConsole = ToolerConsole.Create(args))

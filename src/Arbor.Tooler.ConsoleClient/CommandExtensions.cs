@@ -6,9 +6,11 @@ namespace Arbor.Tooler.ConsoleClient
 {
     internal static class CommandExtensions
     {
+        public const string DownloadDirectory = "-outputdirectory";
+
         public static string GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
-            var foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
+            string foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
 
             if (foundPair is null)
             {
@@ -33,7 +35,5 @@ namespace Arbor.Tooler.ConsoleClient
 
             return commandLineValue;
         }
-
-        public const string DownloadDirectory = "-outputdirectory";
     }
 }

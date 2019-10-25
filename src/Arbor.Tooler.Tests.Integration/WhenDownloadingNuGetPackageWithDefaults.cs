@@ -35,18 +35,29 @@ namespace Arbor.Tooler.Tests.Integration
                             var nugetDownloadSettings =
                                 new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory.FullName);
 
-                            var nugetCliSettings = new NuGetCliSettings();
+                            string nugetConfigFile = Path.Combine(VcsTestPathHelper.FindVcsRootPath(),
+                                "src",
+                                "Arbor.Tooler.Tests.Integration",
+                                "testconfig",
+                                "nuget.config");
+
+                            string nugetSource = "LocalToolerTest";
+
+                            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile,
+                                nugetSourceName: nugetSource);
                             var nugetDownloadClient = new NuGetDownloadClient();
 
                             var installer =
                                 new NuGetPackageInstaller(nugetDownloadClient,
                                     nugetCliSettings,
                                     nugetDownloadSettings,
-                                    logger: logger);
+                                    logger);
 
-                            var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.X"),
+                            var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
                                 NuGetPackageVersion.LatestAvailable);
-                            var nugetPackageSettings = new NugetPackageSettings(false);
+                            var nugetPackageSettings = new NugetPackageSettings(false,
+                                nugetConfigFile: nugetConfigFile,
+                                nugetSource: nugetSource);
 
                             DirectoryInfo installBaseDirectory = packagesTempDir.Directory;
 
@@ -56,11 +67,14 @@ namespace Arbor.Tooler.Tests.Integration
                                 httpClient,
                                 installBaseDirectory).ConfigureAwait(false);
 
-                            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
-                            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory.FullName);
-                            _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
+                            Assert.NotNull(nuGetPackageInstallResult);
+                            Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
 
-                            Assert.Equal("2.2.5", nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
+                            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+                            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+                            _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId?.PackageId);
+
+                            Assert.Equal("1.0.0", nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
                         }
                     }
                 }

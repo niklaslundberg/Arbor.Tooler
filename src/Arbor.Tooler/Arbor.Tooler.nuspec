@@ -19,10 +19,10 @@
     <projectUrl>https://github.com/niklaslundberg/Arbor.Tooler</projectUrl>
     <iconUrl>https://nuget.org/Content/Images/packageDefaultIcon-50x50.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <licenseUrl>https://github.com/niklaslundberg/Arbor.Tooler/blob/master/LICENSE.txt</licenseUrl>
+    <license type="expression">MIT</license>
     <copyright>Copyright Niklas Lundberg 2018-2019</copyright>
     <dependencies>
-      <dependency id="NuGet.Versioning" version="[4.8.0,6.0.0)" />
+      <dependency id="NuGet.Versioning" version="[5.0.0,6.0.0)" />
       <dependency id="Serilog" version="[2.8.0,3.0.0)" />
       <dependency id="System.Net.Http" version="[4.3.4,5.0.0)" />
     </dependencies>
