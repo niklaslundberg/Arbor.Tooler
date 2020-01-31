@@ -1,0 +1,22 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: install-tools
+      run: |
+        dotnet tool install --global Arbor.Tooler.GlobalTool
+        dotnet tool install --global Arbor.Build.Bootstrapper
+    - name: build
+      env:
+        Arbor.Build.NuGet.PackageUpload.Server.ApiKey: ${{ secrets.myget }}
+        Arbor.Build.NuGet.PackageUpload.Server.Uri: "https://www.myget.org/F/arbor/api/v2/package"
+        Arbor.Build.NuGet.PackageUpload.Enabled: "true"
+        Arbor.Build.NuGet.PackageUpload.ForceUploadEnabled: "true"
+      run: build\build.bat

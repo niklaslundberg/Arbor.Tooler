@@ -16,10 +16,7 @@ namespace Arbor.Tooler
 
         public SemanticVersion SemanticVersion { get; }
 
-        public override string ToString()
-        {
-            return
-                $"{nameof(DownloadUrl)}: {DownloadUrl}, {nameof(SemanticVersion)}: {SemanticVersion.ToNormalizedString()}";
-        }
+        public override string ToString() =>
+            $"{nameof(DownloadUrl)}: {DownloadUrl}, {nameof(SemanticVersion)}: {SemanticVersion.ToNormalizedString()}";
     }
 }

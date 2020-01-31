@@ -14,9 +14,6 @@ namespace Arbor.Tooler
 
         public NuGetPackageVersion NuGetPackageVersion { get; }
 
-        public override string ToString()
-        {
-            return $"{NuGetPackageId} {NuGetPackageVersion}";
-        }
+        public override string ToString() => $"{NuGetPackageId} {NuGetPackageVersion}";
     }
 }

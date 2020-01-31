@@ -258,13 +258,7 @@ namespace Arbor.Tooler
                                 displayName = "",
                                 versions = new[]
                                 {
-                                    new
-                                    {
-                                        displayName = "",
-                                        version = "",
-                                        url = "",
-                                        releasedate = ""
-                                    }
+                                    new {displayName = "", version = "", url = "", releasedate = ""}
                                 }
                             }
                         }

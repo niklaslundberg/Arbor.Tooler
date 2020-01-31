@@ -10,10 +10,7 @@ namespace Arbor.Tooler.Tests.Integration
 {
     public class WhenDownloadingNuGetPackageWithDefaults
     {
-        public WhenDownloadingNuGetPackageWithDefaults(ITestOutputHelper output)
-        {
-            _output = output;
-        }
+        public WhenDownloadingNuGetPackageWithDefaults(ITestOutputHelper output) => _output = output;
 
         private readonly ITestOutputHelper _output;
 

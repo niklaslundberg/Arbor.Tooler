@@ -29,10 +29,7 @@ namespace Arbor.Tooler
 
         public static NuGetCliSettings Default => _Default.Value;
 
-        public override string ToString()
-        {
-            return
-                $"{nameof(NugetSourceName)}: {NugetSourceName}, {nameof(NugetConfigFile)}: {NugetConfigFile}, {nameof(NuGetExePath)}: {NuGetExePath}";
-        }
+        public override string ToString() =>
+            $"{nameof(NugetSourceName)}: {NugetSourceName}, {nameof(NugetConfigFile)}: {NugetConfigFile}, {nameof(NuGetExePath)}: {NuGetExePath}";
     }
 }

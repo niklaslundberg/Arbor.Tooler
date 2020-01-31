@@ -19,6 +19,8 @@ SET Arbor.X.NuGet.Package.CreateNuGetWebPackages.Enabled=false
 SET Arbor.X.Tools.External.Xunit.NetCoreApp.Enabled=false
 SET Arbor.X.Tools.External.Xunit.NetFramework.Enabled=false
 
+SET Arbor.Build.Vcs.Branch.Name=%GITHUB_REF%
+
 SET Arbor.X.Build.NetAssembly.MetadataEnabled=true
 SET Arbor.X.Build.NetAssembly.Description=Key value configuration
 SET Arbor.X.Build.NetAssembly.Company=Niklas Lundberg

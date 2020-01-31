@@ -193,3 +193,5 @@ _patchedAssemblyInfos
 *.vspx
 *.ncrunchproject
 **/BenchmarkDotNet.Artifacts/**/*
+.vscode/launch.json
+.vscode/tasks.json

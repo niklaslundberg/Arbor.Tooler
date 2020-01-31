@@ -22,9 +22,6 @@ namespace Arbor.Tooler
 
         public static NugetPackageSettings Default => DefaultSettings.Value;
 
-        public override string ToString()
-        {
-            return $"{nameof(AllowPreRelease)}: {AllowPreRelease}";
-        }
+        public override string ToString() => $"{nameof(AllowPreRelease)}: {AllowPreRelease}";
     }
 }
