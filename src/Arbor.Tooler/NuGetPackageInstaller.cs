@@ -171,7 +171,7 @@ namespace Arbor.Tooler
                     {
                         _logger.Verbose("{Category} {Message}", category, message);
                     },
-                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
+                    toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", category, message); },
                     cancellationToken: tokenSource.Token);
             }
             catch (Exception ex)
@@ -523,14 +523,14 @@ namespace Arbor.Tooler
             ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
                 nugetExePath,
                 arguments,
-                (message, category) => { _logger.Information("{Category} {Message}", message, category); },
-                (message, category) => { _logger.Error("{Category} {Message}", message, category); },
-                debugAction: (message, category) => { _logger.Debug("{Category} {Message}", message, category); },
+                (message, category) => { _logger.Information("{Category} {Message}", category, message); },
+                (message, category) => { _logger.Error("{Category} {Message}", category, message); },
+                debugAction: (message, category) => { _logger.Debug("{Category} {Message}", category, message); },
                 verboseAction: (message, category) =>
                 {
-                    _logger.Verbose("{Category} {Message}", message, category);
+                    _logger.Verbose("{Category} {Message}", category, message);
                 },
-                toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", message, category); },
+                toolAction: (message, category) => { _logger.Verbose("{Category} {Message}", category, message); },
                 cancellationToken: cancellationToken);
 
             if (!exitCode.IsSuccess)
