@@ -25,10 +25,7 @@ namespace Arbor.Tooler
             }
         }
 
-        private NuGetDownloadResult(Exception exception)
-        {
-            Exception = exception;
-        }
+        private NuGetDownloadResult(Exception exception) => Exception = exception;
 
         public string NuGetExePath { get; }
 
@@ -38,25 +35,15 @@ namespace Arbor.Tooler
 
         public Exception Exception { get; }
 
-        public static NuGetDownloadResult FromException(Exception exception)
-        {
-            return new NuGetDownloadResult(exception);
-        }
+        public static NuGetDownloadResult FromException(Exception exception) => new NuGetDownloadResult(exception);
 
-        public static NuGetDownloadResult InvalidDownloadUri(string downloadUri)
-        {
-            return new NuGetDownloadResult($"Invalid download URI {downloadUri}");
-        }
+        public static NuGetDownloadResult InvalidDownloadUri(string downloadUri) =>
+            new NuGetDownloadResult($"Invalid download URI {downloadUri}");
 
-        public static NuGetDownloadResult Success(string targetFilePath)
-        {
-            return new NuGetDownloadResult(targetFilePath, true);
-        }
+        public static NuGetDownloadResult Success(string targetFilePath) =>
+            new NuGetDownloadResult(targetFilePath, true);
 
-        public override string ToString()
-        {
-            return
-                $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
-        }
+        public override string ToString() =>
+            $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
     }
 }

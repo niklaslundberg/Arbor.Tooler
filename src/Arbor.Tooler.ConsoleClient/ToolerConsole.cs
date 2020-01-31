@@ -18,6 +18,16 @@ namespace Arbor.Tooler.ConsoleClient
             _args = args ?? Array.Empty<string>();
         }
 
+        public void Dispose()
+        {
+            if (_logger is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            _logger = null;
+        }
+
         private void ShowUsage()
         {
             _logger.Information(
@@ -95,16 +105,6 @@ namespace Arbor.Tooler.ConsoleClient
             }
 
             return exitCode;
-        }
-
-        public void Dispose()
-        {
-            if (_logger is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-
-            _logger = null;
         }
     }
 }

@@ -16,9 +16,6 @@ namespace Arbor.Tooler
 
         public string PackageId { get; }
 
-        public override string ToString()
-        {
-            return PackageId;
-        }
+        public override string ToString() => PackageId;
     }
 }

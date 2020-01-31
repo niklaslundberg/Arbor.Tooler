@@ -40,10 +40,7 @@ namespace Arbor.Tooler
 
         public static NuGetDownloadSettings Default => DefaultSettings.Value;
 
-        public override string ToString()
-        {
-            return
-                $"{nameof(NugetDownloadUriFormat)}: {NugetDownloadUriFormat}, {nameof(DownloadDirectory)}: {DownloadDirectory}, {nameof(NugetDownloadEnabled)}: {NugetDownloadEnabled}, {nameof(NugetExeVersion)}: {NugetExeVersion}";
-        }
+        public override string ToString() =>
+            $"{nameof(NugetDownloadUriFormat)}: {NugetDownloadUriFormat}, {nameof(DownloadDirectory)}: {DownloadDirectory}, {nameof(NugetDownloadEnabled)}: {NugetDownloadEnabled}, {nameof(NugetExeVersion)}: {NugetExeVersion}";
     }
 }

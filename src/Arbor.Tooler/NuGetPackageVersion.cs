@@ -30,15 +30,24 @@ namespace Arbor.Tooler
 
         public string Version { get; }
 
-        public static bool operator ==(NuGetPackageVersion left, NuGetPackageVersion right)
+        public bool Equals(NuGetPackageVersion other)
         {
-            return Equals(left, right);
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return string.Equals(Version, other.Version, StringComparison.OrdinalIgnoreCase);
         }
 
-        public static bool operator !=(NuGetPackageVersion left, NuGetPackageVersion right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator ==(NuGetPackageVersion left, NuGetPackageVersion right) => Equals(left, right);
+
+        public static bool operator !=(NuGetPackageVersion left, NuGetPackageVersion right) => !Equals(left, right);
 
         public static bool TryParse(string version, out NuGetPackageVersion nuGetPackageVersion)
         {
@@ -85,10 +94,7 @@ namespace Arbor.Tooler
             return obj is NuGetPackageVersion other && Equals(other);
         }
 
-        public override int GetHashCode()
-        {
-            return StringComparer.OrdinalIgnoreCase.GetHashCode(Version);
-        }
+        public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(Version);
 
         public override string ToString()
         {
@@ -98,21 +104,6 @@ namespace Arbor.Tooler
             }
 
             return $"[{Version}]";
-        }
-
-        public bool Equals(NuGetPackageVersion other)
-        {
-            if (other is null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return string.Equals(Version, other.Version, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
