@@ -85,6 +85,8 @@ namespace Arbor.Tooler
                 logger.Debug("Deleted temp file {TempFile}", targetFileTempPath);
             }
 
+            logger.Debug("NuGet client now exists at {TargetFile}", targetFile.FullName);
+
             return NuGetDownloadResult.Success(targetFile.FullName);
         }
 
@@ -334,7 +336,8 @@ namespace Arbor.Tooler
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                         "Arbor.Tooler",
                         "tools",
-                        "nuget"));
+                        "nuget",
+                        nuGetDownloadSettings.NugetExeVersion));
 
                 var downloadDirectory = new DirectoryInfo(downloadDirectoryPath);
 
