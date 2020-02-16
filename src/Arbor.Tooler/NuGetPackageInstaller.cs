@@ -220,7 +220,7 @@ namespace Arbor.Tooler
                     {
                         var parts = package.Split(' ');
 
-                        string currentPackageId = parts[0];
+                        string currentPackageId = parts[0].Trim();
 
                         try
                         {
@@ -238,7 +238,7 @@ namespace Arbor.Tooler
                             if (!packageId.PackageId.Equals(currentPackageId, StringComparison.OrdinalIgnoreCase))
                             {
                                 _logger.Verbose(
-                                    "Found package {Package}, skipping because it does match requested package {RequestedPackage}",
+                                    "Found package '{Package}', skipping because it does not match requested package '{RequestedPackage}'",
                                     currentPackageId,
                                     packageId);
 
