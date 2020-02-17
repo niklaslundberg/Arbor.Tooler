@@ -47,7 +47,8 @@ namespace Arbor.Tooler
             bool allowPreRelease = false,
             string prefix = DefaultPrefixPackageId,
             int? timeoutInSeconds = 30,
-            string nugetConfig = null)
+            string nugetConfig = null,
+            bool? adaptiveEnabled = null)
         {
             ImmutableArray<SemanticVersion> allVersions = await GetAllVersionsAsync(packageId,
                 nugetExePath,
@@ -55,7 +56,8 @@ namespace Arbor.Tooler
                 allowPreRelease,
                 prefix,
                 timeoutInSeconds,
-                nugetConfig);
+                nugetConfig,
+                adaptiveEnabled);
 
             if (allVersions.Length == 0)
             {
@@ -72,14 +74,16 @@ namespace Arbor.Tooler
             bool allowPreRelease = false,
             string prefix = DefaultPrefixPackageId,
             int? timeoutInSeconds = 30,
-            string nugetConfig = null) =>
+            string nugetConfig = null,
+            bool? adaptiveEnabled = null) =>
             GetAllVersionsInternalAsync(packageId,
                 nugetExePath,
                 nuGetSource,
                 allowPreRelease,
                 prefix,
                 timeoutInSeconds,
-                nugetConfig);
+                nugetConfig,
+                adaptiveEnabled: adaptiveEnabled);
 
         private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsInternalAsync(
             NuGetPackageId packageId,
@@ -89,9 +93,11 @@ namespace Arbor.Tooler
             string prefix = default,
             int? timeoutInSeconds = default,
             string nugetConfig = null,
-            bool firstAttempt = true)
+            bool firstAttempt = true,
+            bool? adaptiveEnabled = null)
         {
-            if (_nugetCliSettings.AdaptivePackagePrefixEnabled)
+            bool adaptiveEnabledValue = _nugetCliSettings.AdaptivePackagePrefixEnabled && (!adaptiveEnabled.HasValue || adaptiveEnabled.Value);
+            if (adaptiveEnabledValue)
             {
                 if (prefix is null)
                 {
@@ -146,22 +152,25 @@ namespace Arbor.Tooler
                         _logger.Verbose("{Category} {Message}", category, message);
                         lines.Add(message);
 
-                        var packageLines = lines.Where(line =>
-                            !ignoredOutputStatements.Any(ignored =>
-                                line.IndexOf(ignored, StringComparison.OrdinalIgnoreCase) >= 0)).ToArray();
-
-                        int packageLineCount = packageLines.Length;
-
-                        if (packageLineCount > 5)
+                        if (adaptiveEnabledValue)
                         {
-                            if (packageLines.Any(line =>
-                                !line.StartsWith(packageId.PackageId, StringComparison.OrdinalIgnoreCase)))
+                            var packageLines = lines.Where(line =>
+                                !ignoredOutputStatements.Any(ignored =>
+                                    line.IndexOf(ignored, StringComparison.OrdinalIgnoreCase) >= 0)).ToArray();
+
+                            int packageLineCount = packageLines.Length;
+
+                            if (packageLineCount > 5)
                             {
-                                _logger.Warning(
-                                    "Got packages with other IDs than {PackageId}, aborting package version listing",
-                                    packageId.PackageId);
-                                isExplicitlyCancelledWithPackageIdMismatch = true;
-                                tokenSource.Cancel();
+                                if (packageLines.Any(line =>
+                                    !line.StartsWith(packageId.PackageId, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    _logger.Warning(
+                                        "Got packages with other IDs than {PackageId}, aborting package version listing",
+                                        packageId.PackageId);
+                                    isExplicitlyCancelledWithPackageIdMismatch = true;
+                                    tokenSource.Cancel();
+                                }
                             }
                         }
                     },
@@ -179,7 +188,7 @@ namespace Arbor.Tooler
                 _logger.Warning(ex, "Could not get versions for package id {PackageId}", packageId.PackageId);
 
                 if (isExplicitlyCancelledWithPackageIdMismatch
-                    && _nugetCliSettings.AdaptivePackagePrefixEnabled
+                    && adaptiveEnabledValue
                     && string.IsNullOrWhiteSpace(prefix)
                     && firstAttempt)
                 {
@@ -191,7 +200,8 @@ namespace Arbor.Tooler
                         DefaultPrefixPackageId,
                         timeoutInSeconds,
                         nugetConfig,
-                        false);
+                        false,
+                        adaptiveEnabled);
 
                     if (allVersionsWithPrefix.Length > 0)
                     {
@@ -281,7 +291,8 @@ namespace Arbor.Tooler
                     "",
                     timeoutInSeconds,
                     nugetConfig,
-                    false);
+                    false,
+                    adaptiveEnabled);
 
                 if (allVersions.Length > 0)
                 {
