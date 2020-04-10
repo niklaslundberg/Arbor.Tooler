@@ -195,3 +195,4 @@ _patchedAssemblyInfos
 **/BenchmarkDotNet.Artifacts/**/*
 .vscode/launch.json
 .vscode/tasks.json
+**/*.LocalTest.cs
