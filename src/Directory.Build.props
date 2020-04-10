@@ -11,5 +11,6 @@
     <EmbedAllSources>true</EmbedAllSources>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <Nullable>enable</Nullable>
+    <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
   </PropertyGroup>
 </Project>
