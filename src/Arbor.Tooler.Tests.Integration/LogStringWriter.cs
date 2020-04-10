@@ -7,14 +7,10 @@ namespace Arbor.Tooler.Tests.Integration
 {
     internal class LogStringWriter : StringWriter
     {
+        private readonly List<string> _buffer = new List<string>();
         private readonly Action<string> _logAction;
 
-        private readonly List<string> _buffer = new List<string>();
-
-        public LogStringWriter(Action<string> logAction)
-        {
-            _logAction = logAction;
-        }
+        public LogStringWriter(Action<string> logAction) => _logAction = logAction;
 
         private void DoFlush()
         {
@@ -24,15 +20,10 @@ namespace Arbor.Tooler.Tests.Integration
             }
         }
 
-        public override void WriteLine(string message)
-        {
-            _logAction?.Invoke(message);
-        }
+        public override void WriteLine(string message) => _logAction?.Invoke(message);
 
-        public override void Write(string message, params object[] args)
-        {
+        public override void Write(string message, params object[] args) =>
             _logAction?.Invoke(string.Format(message, args));
-        }
 
         public override void Write(string message)
         {

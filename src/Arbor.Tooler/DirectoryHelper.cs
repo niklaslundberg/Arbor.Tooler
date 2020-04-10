@@ -6,10 +6,8 @@ namespace Arbor.Tooler
 {
     internal static class DirectoryHelper
     {
-        public static string UserLocalAppDataDirectory()
-        {
-            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
+        public static string UserLocalAppDataDirectory() =>
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
         public static DirectoryInfo FromPathSegments(string first, params string[] otherParts)
         {

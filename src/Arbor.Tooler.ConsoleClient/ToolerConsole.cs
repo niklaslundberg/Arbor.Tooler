@@ -18,19 +18,29 @@ namespace Arbor.Tooler.ConsoleClient
             _args = args ?? Array.Empty<string>();
         }
 
+        public void Dispose()
+        {
+            if (_logger is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            _logger = null;
+        }
+
         private void ShowUsage()
         {
             _logger.Information(
-                "Example usage: {Command} {Argument}{Separator}{ExampleArgument}",
+                "Example usage: {Command} {Argument}={ExampleArgument} {VersionArgument}={ExampleVersionValue}",
                 "dotnet-arbor-tooler",
                 CommandExtensions.DownloadDirectory,
-                '=',
-                @"C:\Tools\NuGet");
+                @"C:\Tools\NuGet",
+                CommandExtensions.ExeVersion,
+                "5.4.0");
             _logger.Information(
-                "Example usage, default location: {Command} {Argument}{Separator}{DefaultArgument}",
+                "Example usage, default location: {Command} {Argument}={DefaultArgument}",
                 "dotnet-arbor-tooler",
                 CommandExtensions.DownloadDirectory,
-                '=',
                 "default");
         }
 
@@ -57,6 +67,7 @@ namespace Arbor.Tooler.ConsoleClient
                 else
                 {
                     string downloadDirectory = _args.GetCommandLineValue(CommandExtensions.DownloadDirectory);
+                    string exeVersion = _args.GetCommandLineValue(CommandExtensions.ExeVersion);
 
                     if (string.IsNullOrWhiteSpace(downloadDirectory))
                     {
@@ -70,7 +81,7 @@ namespace Arbor.Tooler.ConsoleClient
                         }
 
                         NuGetDownloadResult nuGetDownloadResult = await new NuGetDownloadClient().DownloadNuGetAsync(
-                            new NuGetDownloadSettings(downloadDirectory: downloadDirectory),
+                            new NuGetDownloadSettings(downloadDirectory: downloadDirectory, nugetExeVersion: exeVersion),
                             _logger);
 
                         if (nuGetDownloadResult.Succeeded)
@@ -95,16 +106,6 @@ namespace Arbor.Tooler.ConsoleClient
             }
 
             return exitCode;
-        }
-
-        public void Dispose()
-        {
-            if (_logger is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-
-            _logger = null;
         }
     }
 }

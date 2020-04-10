@@ -7,6 +7,7 @@ namespace Arbor.Tooler.ConsoleClient
     internal static class CommandExtensions
     {
         public const string DownloadDirectory = "-outputdirectory";
+        public const string ExeVersion = "-exe-version";
 
         public static string GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
