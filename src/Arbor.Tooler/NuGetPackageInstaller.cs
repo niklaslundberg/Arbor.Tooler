@@ -377,7 +377,7 @@ namespace Arbor.Tooler
             CancellationToken cancellationToken = default)
         {
             if (!string.IsNullOrWhiteSpace(_nugetCliSettings.NuGetExePath)
-                && File.Exists(_nugetCliSettings.NuGetExePath))
+                && File.Exists(_nugetCliSettings.NuGetExePath) && !_nugetDownloadSettings.Force)
             {
                 return _nugetCliSettings.NuGetExePath;
             }
