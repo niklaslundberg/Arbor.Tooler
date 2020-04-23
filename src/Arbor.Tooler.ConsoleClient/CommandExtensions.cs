@@ -8,8 +8,9 @@ namespace Arbor.Tooler.ConsoleClient
     {
         public const string DownloadDirectory = "-outputdirectory";
         public const string ExeVersion = "-exe-version";
+        public const string Force = "--force";
 
-        public static string GetCommandLineValue(this IEnumerable<string> keys, string key)
+        public static string? GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
             string foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
 

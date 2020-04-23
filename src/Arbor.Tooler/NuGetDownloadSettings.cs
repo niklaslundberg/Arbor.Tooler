@@ -16,13 +16,15 @@ namespace Arbor.Tooler
 
         public NuGetDownloadSettings(
             bool? nugetDownloadEnabled = null,
-            string nugetExeVersion = null,
-            string nugetDownloadUriFormat = null,
-            string downloadDirectory = null,
-            bool? updateEnabled = null)
+            string? nugetExeVersion = null,
+            string? nugetDownloadUriFormat = null,
+            string? downloadDirectory = null,
+            bool? updateEnabled = null,
+            bool force = false)
         {
             NugetDownloadUriFormat = nugetDownloadUriFormat.WithDefault(DefaultNuGetExeDownloadUriFormat);
             DownloadDirectory = downloadDirectory;
+            Force = force;
             UpdateEnabled = updateEnabled ?? false;
             NugetDownloadEnabled = nugetDownloadEnabled ?? DefaultNugetExeDownloadEnabled;
             NugetExeVersion = nugetExeVersion.WithDefault(DefaultNuGetExeVersion);
@@ -31,6 +33,7 @@ namespace Arbor.Tooler
         public string NugetDownloadUriFormat { get; }
 
         public string DownloadDirectory { get; }
+        public bool Force { get; }
 
         public bool UpdateEnabled { get; }
 
