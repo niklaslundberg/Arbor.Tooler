@@ -25,13 +25,13 @@
     <dependencies>
       <dependency id="NuGet.Versioning" version="[5.0.0,6.0.0)" />
       <dependency id="Serilog" version="[2.8.0,3.0.0)" />
-      <dependency id="System.Net.Http" version="[4.3.4,5.0.0)" />
+      <dependency id="System.Net.Http" version="[4.3.4,6.0.0)" />
       <dependency id="Arbor.Processing" version="0.4.0" />
     </dependencies>
     <references></references>
     <tags></tags>
   </metadata>
   <files>
-    <file src="bin\$configuration$\netstandard2.0\Arbor.Tooler.dll" target="lib\netstandard2.0" />
+    <file src="bin\$configuration$\netcoreapp3.1\Arbor.Tooler.dll" target="lib\netcoreapp3.1" />
   </files>
 </package>
