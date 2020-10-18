@@ -33,7 +33,7 @@ namespace Arbor.Tooler.ConsoleClient
                 return default;
             }
 
-            string commandLineValue = foundPair.Substring(valueStart);
+            string commandLineValue = foundPair[valueStart..];
 
             return commandLineValue;
         }

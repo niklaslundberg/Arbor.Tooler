@@ -26,11 +26,13 @@ namespace Arbor.Tooler
             Version = version;
         }
 
-        public SemanticVersion SemanticVersion { get; }
+        public SemanticVersion? SemanticVersion { get; }
 
         public string Version { get; }
 
-        public bool Equals(NuGetPackageVersion other)
+        public override bool Equals(object? obj) => Equals(obj as NuGetPackageVersion);
+
+        public bool Equals(NuGetPackageVersion? other)
         {
             if (other is null)
             {
@@ -78,22 +80,6 @@ namespace Arbor.Tooler
             nuGetPackageVersion = new NuGetPackageVersion(semanticVersion);
             return true;
         }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            return obj is NuGetPackageVersion other && Equals(other);
-        }
-
         public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(Version);
 
         public override string ToString()

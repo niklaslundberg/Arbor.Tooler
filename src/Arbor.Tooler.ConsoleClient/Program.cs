@@ -6,13 +6,8 @@ namespace Arbor.Tooler.ConsoleClient
     {
         private static async Task<int> Main(string[] args)
         {
-            int exitCode;
-            using (ToolerConsole toolerConsole = ToolerConsole.Create(args))
-            {
-                exitCode = await toolerConsole.RunAsync();
-            }
-
-            return exitCode;
+            using var toolerConsole = ToolerConsole.Create(args);
+            return await toolerConsole.RunAsync().ConfigureAwait(false);
         }
     }
 }

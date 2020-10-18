@@ -16,12 +16,12 @@ namespace Arbor.Tooler
 {
     public class NuGetDownloadClient
     {
-        private async Task<NuGetDownloadResult> DownloadAsync(
+        private static async Task<NuGetDownloadResult> DownloadAsync(
             ILogger logger,
             Uri nugetExeUri,
             FileInfo targetFile,
             string targetFileTempPath,
-            HttpClient httpClient,
+            HttpClient? httpClient,
             CancellationToken cancellationToken)
         {
             logger.Debug("Downloading {Uri} to {TempFile}", nugetExeUri, targetFileTempPath);
@@ -36,36 +36,35 @@ namespace Arbor.Tooler
 
                 try
                 {
-                    using (HttpResponseMessage httpResponseMessage =
-                        await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
+                    using HttpResponseMessage httpResponseMessage =
+                        await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+                    await using (var nugetExeFileStream =
+                        new FileStream(targetFileTempPath, FileMode.OpenOrCreate, FileAccess.Write))
                     {
-                        using (var nugetExeFileStream =
-                            new FileStream(targetFileTempPath, FileMode.OpenOrCreate, FileAccess.Write))
+                        if (!httpResponseMessage.IsSuccessStatusCode)
                         {
-                            if (!httpResponseMessage.IsSuccessStatusCode)
-                            {
-                                return NuGetDownloadResult.DownloadFailed(httpResponseMessage.StatusCode);
-                            }
-
-                            using Stream downloadStream =
-                                await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                            const int defaultBufferSize = 8192;
-                            await downloadStream.CopyToAsync(nugetExeFileStream,
-                                    defaultBufferSize,
-                                    cancellationToken)
-                                .ConfigureAwait(false);
-
-                            await nugetExeFileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                            logger.Debug("Successfully downloaded {TempFile}", targetFileTempPath);
+                            return NuGetDownloadResult.DownloadFailed(httpResponseMessage.StatusCode);
                         }
 
-                        var fileInfo = new FileInfo(targetFileTempPath);
+                        using Stream downloadStream =
+                            await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                        const int defaultBufferSize = 8192;
+                        await downloadStream.CopyToAsync(nugetExeFileStream,
+                                defaultBufferSize,
+                                cancellationToken)
+                            .ConfigureAwait(false);
 
-                        if (fileInfo.Length < 1024 * 1024)
-                        {
-                            return NuGetDownloadResult.DownloadFailed("Downloaded file is not complete");
-                        }
+                        await nugetExeFileStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                        logger.Debug("Successfully downloaded {TempFile}", targetFileTempPath);
+                    }
+
+                    var fileInfo = new FileInfo(targetFileTempPath);
+
+                    if (fileInfo.Length < 1024 * 1024)
+                    {
+                        return NuGetDownloadResult.DownloadFailed("Downloaded file is not complete");
                     }
                 }
                 finally
@@ -150,7 +149,7 @@ namespace Arbor.Tooler
                     debugAction: DebugAction,
                     verboseAction: VerboseAction,
                     toolAction: ToolAction,
-                    cancellationToken: cancellationToken);
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 if (!exitCode.IsSuccess)
                 {
@@ -159,7 +158,7 @@ namespace Arbor.Tooler
 
                 // Found version string should be like 'NuGet Version: 4.7.1.5393'
 
-                string foundVersionLine = output.SingleOrDefault(line => line.Trim().StartsWith("NuGet Version:"));
+                string? foundVersionLine = output.SingleOrDefault(line => line.Trim().StartsWith("NuGet Version:"));
 
                 string[]? semVerParts = foundVersionLine
                     ?.Split(':').LastOrDefault()
@@ -185,7 +184,7 @@ namespace Arbor.Tooler
                 ImmutableArray<AvailableVersion> availableVersion = await GetAvailableVersionsFromNuGet(
                     httpClient,
                     logger,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
 
                 if (availableVersion.IsDefaultOrEmpty)
                 {
@@ -206,7 +205,7 @@ namespace Arbor.Tooler
                         targetFile,
                         targetFileTempPath,
                         httpClient,
-                        cancellationToken);
+                        cancellationToken).ConfigureAwait(false);
 
                     if (newerResult.Succeeded)
                     {
@@ -233,7 +232,7 @@ namespace Arbor.Tooler
             return null;
         }
 
-        private async Task<ImmutableArray<AvailableVersion>> GetAvailableVersionsFromNuGet(
+        private static async Task<ImmutableArray<AvailableVersion>> GetAvailableVersionsFromNuGet(
             HttpClient httpClient,
             ILogger logger,
             CancellationToken cancellationToken)
@@ -245,19 +244,17 @@ namespace Arbor.Tooler
                 string json;
                 using (var request = new HttpRequestMessage(HttpMethod.Get, url))
                 {
-                    using (HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken))
+                    using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode)
                     {
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            logger.Warning(
-                                "Could not get available nuget.exe versions, http status code was not successful {StatusCode}",
-                                response.StatusCode);
+                        logger.Warning(
+                            "Could not get available nuget.exe versions, http status code was not successful {StatusCode}",
+                            response.StatusCode);
 
-                            return ImmutableArray<AvailableVersion>.Empty;
-                        }
-
-                        json = await response.Content.ReadAsStringAsync();
+                        return ImmutableArray<AvailableVersion>.Empty;
                     }
+
+                    json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 }
 
                 var sample = new
@@ -279,7 +276,7 @@ namespace Arbor.Tooler
 
                 var deserializedAnonymousType = JsonConvert.DeserializeAnonymousType(json, sample);
 
-                ImmutableArray<AvailableVersion>? availableVersions = deserializedAnonymousType.artifacts
+                var availableVersions = deserializedAnonymousType.artifacts
                     .SingleOrDefault(artifact =>
                         artifact.name.Equals("win-x86-commandline", StringComparison.OrdinalIgnoreCase))
                     ?.versions
@@ -306,7 +303,7 @@ namespace Arbor.Tooler
             }
         }
 
-        public async Task<NuGetDownloadResult> DownloadNuGetAsync(
+        public Task<NuGetDownloadResult> DownloadNuGetAsync(
             NuGetDownloadSettings nuGetDownloadSettings,
             [NotNull] ILogger logger,
             HttpClient? httpClient = null,
@@ -322,6 +319,14 @@ namespace Arbor.Tooler
                 throw new ArgumentNullException(nameof(logger));
             }
 
+            return DownloadNuGetInternalAsync(nuGetDownloadSettings, logger, httpClient, cancellationToken);
+        }
+        public async Task<NuGetDownloadResult> DownloadNuGetInternalAsync(
+            NuGetDownloadSettings nuGetDownloadSettings,
+            [NotNull] ILogger logger,
+            HttpClient? httpClient = null,
+            CancellationToken cancellationToken = default)
+        {
             if (!nuGetDownloadSettings.NugetDownloadEnabled)
             {
                 return NuGetDownloadResult.Disabled;
@@ -348,7 +353,7 @@ namespace Arbor.Tooler
                         "Arbor.Tooler",
                         "tools",
                         "nuget",
-                        nuGetDownloadSettings.NugetExeVersion));
+                        nuGetDownloadSettings.NugetExeVersion))!;
 
                 var downloadDirectory = new DirectoryInfo(downloadDirectoryPath);
 
@@ -379,7 +384,7 @@ namespace Arbor.Tooler
                             targetFileTempPath,
                             logger,
                             httpClient,
-                            cancellationToken);
+                            cancellationToken).ConfigureAwait(false);
 
                         if (nuGetDownloadResult?.Succeeded == true)
                         {
@@ -392,13 +397,13 @@ namespace Arbor.Tooler
 
                 string downloadUriFormat =
                     nuGetDownloadSettings.NugetDownloadUriFormat.WithDefault(NuGetDownloadSettings
-                        .DefaultNuGetExeDownloadUriFormat);
+                        .DefaultNuGetExeDownloadUriFormat)!;
 
                 string downloadUri = downloadUriFormat.IndexOf("{0}", StringComparison.OrdinalIgnoreCase) >= 0
                     ? string.Format(downloadUriFormat, nuGetDownloadSettings.NugetExeVersion)
                     : downloadUriFormat;
 
-                if (!Uri.TryCreate(downloadUri, UriKind.Absolute, out Uri nugetExeUri)
+                if (!Uri.TryCreate(downloadUri, UriKind.Absolute, out Uri? nugetExeUri)
                     || !nugetExeUri.IsHttpOrHttps())
                 {
                     return NuGetDownloadResult.InvalidDownloadUri(downloadUri);
@@ -409,22 +414,19 @@ namespace Arbor.Tooler
                     targetFile,
                     targetFileTempPath,
                     httpClient,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
 
-                if (result.Succeeded)
+                if (result.Succeeded && nuGetDownloadSettings.UpdateEnabled)
                 {
-                    if (nuGetDownloadSettings.UpdateEnabled)
-                    {
-                        NuGetDownloadResult? nuGetDownloadResult = await EnsureLatestAsync(targetFile,
-                            targetFileTempPath,
-                            logger,
-                            httpClient,
-                            cancellationToken);
+                    NuGetDownloadResult? nuGetDownloadResult = await EnsureLatestAsync(targetFile,
+                        targetFileTempPath,
+                        logger,
+                        httpClient,
+                        cancellationToken).ConfigureAwait(false);
 
-                        if (nuGetDownloadResult?.Succeeded == true)
-                        {
-                            return nuGetDownloadResult;
-                        }
+                    if (nuGetDownloadResult?.Succeeded == true)
+                    {
+                        return nuGetDownloadResult;
                     }
                 }
 

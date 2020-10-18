@@ -3,7 +3,7 @@
 <Project>
   <PropertyGroup>
     <Deterministic>true</Deterministic>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8</LangVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Features>IOperation</Features>
     <DebugType>embedded</DebugType>

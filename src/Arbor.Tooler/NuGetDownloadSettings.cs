@@ -30,16 +30,16 @@ namespace Arbor.Tooler
             NugetExeVersion = nugetExeVersion.WithDefault(DefaultNuGetExeVersion);
         }
 
-        public string NugetDownloadUriFormat { get; }
+        public string? NugetDownloadUriFormat { get; }
 
-        public string DownloadDirectory { get; }
+        public string? DownloadDirectory { get; }
         public bool Force { get; }
 
         public bool UpdateEnabled { get; }
 
         public bool NugetDownloadEnabled { get; }
 
-        public string NugetExeVersion { get; }
+        public string? NugetExeVersion { get; }
 
         public static NuGetDownloadSettings Default => DefaultSettings.Value;
 

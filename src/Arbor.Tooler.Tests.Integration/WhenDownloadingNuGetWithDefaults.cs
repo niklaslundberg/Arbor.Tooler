@@ -18,38 +18,30 @@ namespace Arbor.Tooler.Tests.Integration
         [Fact]
         public async Task ThenItShouldDownloadTheNuGetExeSuccessfully()
         {
-            using (TempDirectory tempDirectory = TempDirectory.CreateTempDirectory())
-            {
-                using (var httpClient = new HttpClient())
-                {
-                    var nuGetDownloadClient = new NuGetDownloadClient();
+            using var tempDirectory = TempDirectory.CreateTempDirectory();
+            using var httpClient = new HttpClient();
+            var nuGetDownloadClient = new NuGetDownloadClient();
 
-                    var nuGetDownloadSettings =
-                        new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory.FullName);
+            var nuGetDownloadSettings =
+                new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory!.FullName);
 
+            await using var logWriter = new LogStringWriter(_output.WriteLine);
+            Console.SetOut(logWriter);
 
-                    using (var logWriter = new LogStringWriter(_output.WriteLine))
-                    {
-                        Console.SetOut(logWriter);
+            using Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
+                .MinimumLevel.Verbose()
+                .CreateLogger();
 
-                        using (Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
-                            .MinimumLevel.Verbose()
-                            .CreateLogger())
-                        {
-                            NuGetDownloadResult nuGetDownloadResult =
-                                await nuGetDownloadClient.DownloadNuGetAsync(
-                                    nuGetDownloadSettings,
-                                    logger,
-                                    httpClient,
-                                    CancellationToken.None).ConfigureAwait(false);
+            NuGetDownloadResult nuGetDownloadResult =
+                await nuGetDownloadClient.DownloadNuGetAsync(
+                    nuGetDownloadSettings,
+                    logger,
+                    httpClient,
+                    CancellationToken.None).ConfigureAwait(false);
 
-                            _output.WriteLine(nuGetDownloadResult.Result);
+            _output.WriteLine(nuGetDownloadResult.Result);
 
-                            Assert.True(nuGetDownloadResult.Succeeded);
-                        }
-                    }
-                }
-            }
+            Assert.True(nuGetDownloadResult.Succeeded);
         }
     }
 }

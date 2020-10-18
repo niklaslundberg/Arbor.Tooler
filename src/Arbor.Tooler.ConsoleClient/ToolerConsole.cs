@@ -86,7 +86,7 @@ namespace Arbor.Tooler.ConsoleClient
 
                         NuGetDownloadResult nuGetDownloadResult = await new NuGetDownloadClient().DownloadNuGetAsync(
                             new NuGetDownloadSettings(downloadDirectory: downloadDirectory, nugetExeVersion: exeVersion, force: force),
-                            _logger);
+                            _logger).ConfigureAwait(false);
 
                         if (nuGetDownloadResult.Succeeded)
                         {

@@ -6,10 +6,10 @@ namespace Arbor.Tooler.Tests.Integration
 {
     public class MySink : ILogEventSink
     {
-        private readonly IFormatProvider _formatProvider;
+        private readonly IFormatProvider? _formatProvider;
         private readonly Action<string> _logAction;
 
-        public MySink(Action<string> logAction, IFormatProvider formatProvider)
+        public MySink(Action<string> logAction, IFormatProvider? formatProvider)
         {
             _logAction = logAction;
             _formatProvider = formatProvider;

@@ -6,7 +6,6 @@
     <PackAsTool>true</PackAsTool>
     <PackageId>Arbor.Tooler.GlobalTool</PackageId>
     <AssemblyName>dotnet-arbor-tooler</AssemblyName>
-    <LangVersion>8</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,32 +8,44 @@ namespace Arbor.Tooler.Tests.Integration
     internal class LogStringWriter : StringWriter
     {
         private readonly List<string> _buffer = new List<string>();
-        private readonly Action<string> _logAction;
+        private readonly Action<string?>? _logAction;
 
-        public LogStringWriter(Action<string> logAction) => _logAction = logAction;
+        public LogStringWriter(Action<string?>? logAction) => _logAction = logAction;
 
         private void DoFlush()
         {
             if (_buffer.Count > 0)
             {
-                _logAction?.Invoke(string.Join("", _buffer));
+                _logAction?.Invoke(string.Concat(_buffer));
             }
         }
 
-        public override void WriteLine(string message) => _logAction?.Invoke(message);
+        public override void WriteLine(string? value) => _logAction?.Invoke(value);
 
-        public override void Write(string message, params object[] args) =>
-            _logAction?.Invoke(string.Format(message, args));
-
-        public override void Write(string message)
+        public override void Write(string? format, params object?[] arg)
         {
-            if (message.Contains(Environment.NewLine))
+            if (format is null)
             {
-                _logAction?.Invoke(string.Join("", _buffer) + message);
+                return;
+            }
+
+            _logAction?.Invoke(string.Format(format, arg));
+        }
+
+        public override void Write(string? value)
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            if (value.Contains(Environment.NewLine))
+            {
+                _logAction?.Invoke(string.Concat(_buffer) + value);
             }
             else
             {
-                _buffer.Add(message);
+                _buffer.Add(value);
             }
         }
 
@@ -47,7 +59,7 @@ namespace Arbor.Tooler.Tests.Integration
         public override async Task FlushAsync()
         {
             DoFlush();
-            await base.FlushAsync();
+            await base.FlushAsync().ConfigureAwait(false);
         }
     }
 }

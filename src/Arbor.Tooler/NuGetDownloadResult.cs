@@ -3,7 +3,7 @@ using System.Net;
 
 namespace Arbor.Tooler
 {
-    public class NuGetDownloadResult
+    public sealed class NuGetDownloadResult
     {
         public static readonly NuGetDownloadResult Disabled = new NuGetDownloadResult(nameof(Disabled));
 
