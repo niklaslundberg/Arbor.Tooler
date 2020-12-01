@@ -9,7 +9,7 @@ namespace Arbor.Tooler
         public static string UserLocalAppDataDirectory() =>
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-        public static DirectoryInfo FromPathSegments(string first, params string[] otherParts)
+        public static DirectoryInfo FromPathSegments(string first, params string[]? otherParts)
         {
             if (string.IsNullOrWhiteSpace(first))
             {
@@ -44,9 +44,9 @@ namespace Arbor.Tooler
         }
 
         public static void CopyRecursiveTo(
-            this DirectoryInfo sourceDirectory,
+            this DirectoryInfo? sourceDirectory,
             DirectoryInfo targetDirectory,
-            ILogger logger = null)
+            ILogger? logger = null)
         {
             if (targetDirectory == null)
             {

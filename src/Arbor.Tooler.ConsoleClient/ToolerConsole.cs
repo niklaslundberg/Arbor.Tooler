@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Serilog;
 using Serilog.Core;
@@ -25,7 +26,7 @@ namespace Arbor.Tooler.ConsoleClient
                 disposable.Dispose();
             }
 
-            _logger = null;
+            _logger = null!;
         }
 
         private void ShowUsage()
@@ -66,8 +67,11 @@ namespace Arbor.Tooler.ConsoleClient
                 }
                 else
                 {
-                    string downloadDirectory = _args.GetCommandLineValue(CommandExtensions.DownloadDirectory);
-                    string exeVersion = _args.GetCommandLineValue(CommandExtensions.ExeVersion);
+                    string? downloadDirectory = _args.GetCommandLineValue(CommandExtensions.DownloadDirectory);
+                    string? exeVersion = _args.GetCommandLineValue(CommandExtensions.ExeVersion);
+
+                    bool force = _args.Any(arg =>
+                        arg.Equals(CommandExtensions.Force, StringComparison.OrdinalIgnoreCase));
 
                     if (string.IsNullOrWhiteSpace(downloadDirectory))
                     {
@@ -81,8 +85,8 @@ namespace Arbor.Tooler.ConsoleClient
                         }
 
                         NuGetDownloadResult nuGetDownloadResult = await new NuGetDownloadClient().DownloadNuGetAsync(
-                            new NuGetDownloadSettings(downloadDirectory: downloadDirectory, nugetExeVersion: exeVersion),
-                            _logger);
+                            new NuGetDownloadSettings(downloadDirectory: downloadDirectory, nugetExeVersion: exeVersion, force: force),
+                            _logger).ConfigureAwait(false);
 
                         if (nuGetDownloadResult.Succeeded)
                         {

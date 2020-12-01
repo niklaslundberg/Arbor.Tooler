@@ -9,7 +9,7 @@ namespace Arbor.Tooler.Tests.Integration
         public static LoggerConfiguration MySink(
             this LoggerSinkConfiguration loggerConfiguration,
             Action<string> logAction,
-            IFormatProvider formatProvider = null) =>
+            IFormatProvider? formatProvider = null) =>
             loggerConfiguration.Sink(new MySink(logAction, formatProvider));
     }
 }

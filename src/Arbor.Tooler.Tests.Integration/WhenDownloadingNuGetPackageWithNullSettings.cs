@@ -30,11 +30,11 @@ namespace Arbor.Tooler.Tests.Integration
             Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
             Assert.Equal("0.2.4", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
 
-            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
-            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory.FullName);
+            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
             _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
-            await Task.Delay(TimeSpan.FromSeconds(3));
+            await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
         }
     }
 }

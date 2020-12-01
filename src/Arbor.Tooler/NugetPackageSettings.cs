@@ -7,7 +7,7 @@ namespace Arbor.Tooler
         private static readonly Lazy<NugetPackageSettings> DefaultSettings =
             new Lazy<NugetPackageSettings>(() => new NugetPackageSettings(false));
 
-        public NugetPackageSettings(bool allowPreRelease, string nugetSource = null, string nugetConfigFile = null)
+        public NugetPackageSettings(bool allowPreRelease, string? nugetSource = null, string? nugetConfigFile = null)
         {
             AllowPreRelease = allowPreRelease;
             NugetSource = nugetSource;
@@ -16,9 +16,9 @@ namespace Arbor.Tooler
 
         public bool AllowPreRelease { get; }
 
-        public string NugetSource { get; }
+        public string? NugetSource { get; }
 
-        public string NugetConfigFile { get; }
+        public string? NugetConfigFile { get; }
 
         public static NugetPackageSettings Default => DefaultSettings.Value;
 

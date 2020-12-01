@@ -8,10 +8,11 @@ namespace Arbor.Tooler.ConsoleClient
     {
         public const string DownloadDirectory = "-outputdirectory";
         public const string ExeVersion = "-exe-version";
+        public const string Force = "--force";
 
-        public static string GetCommandLineValue(this IEnumerable<string> keys, string key)
+        public static string? GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
-            string foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
+            string? foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
 
             if (foundPair is null)
             {
@@ -32,7 +33,7 @@ namespace Arbor.Tooler.ConsoleClient
                 return default;
             }
 
-            string commandLineValue = foundPair.Substring(valueStart);
+            string commandLineValue = foundPair[valueStart..];
 
             return commandLineValue;
         }

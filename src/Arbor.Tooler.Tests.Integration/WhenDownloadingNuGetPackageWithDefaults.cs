@@ -17,65 +17,57 @@ namespace Arbor.Tooler.Tests.Integration
         [Fact]
         public async Task ItShouldHaveDownloadedTheLatestVersion()
         {
-            using (TempDirectory nugetExeDownloadDir = TempDirectory.CreateTempDirectory())
-            {
-                using (TempDirectory packagesTempDir = TempDirectory.CreateTempDirectory())
-                {
-                    using (var httpClient = new HttpClient())
-                    {
-                        Logger testLogger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine).MinimumLevel
-                            .Verbose()
-                            .CreateLogger();
+            using var nugetExeDownloadDir = TempDirectory.CreateTempDirectory();
+            using var packagesTempDir = TempDirectory.CreateTempDirectory();
+            using var httpClient = new HttpClient();
+            Logger testLogger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine).MinimumLevel
+                .Verbose()
+                .CreateLogger();
 
-                        using (Logger logger = testLogger)
-                        {
-                            var nugetDownloadSettings =
-                                new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory.FullName);
+            using Logger logger = testLogger;
+            var nugetDownloadSettings =
+                new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory?.FullName);
 
-                            string nugetConfigFile = Path.Combine(VcsTestPathHelper.FindVcsRootPath(),
-                                "src",
-                                "Arbor.Tooler.Tests.Integration",
-                                "testconfig",
-                                "nuget.config");
+            string nugetConfigFile = Path.Combine(VcsTestPathHelper.FindVcsRootPath(),
+                "src",
+                "Arbor.Tooler.Tests.Integration",
+                "testconfig",
+                "nuget.config");
 
-                            string nugetSource = "LocalToolerTest";
+            const string nugetSource = "LocalToolerTest";
 
-                            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile,
-                                nugetSourceName: nugetSource);
-                            var nugetDownloadClient = new NuGetDownloadClient();
+            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile,
+                nugetSourceName: nugetSource);
+            var nugetDownloadClient = new NuGetDownloadClient();
 
-                            var installer =
-                                new NuGetPackageInstaller(nugetDownloadClient,
-                                    nugetCliSettings,
-                                    nugetDownloadSettings,
-                                    logger);
+            var installer =
+                new NuGetPackageInstaller(nugetDownloadClient,
+                    nugetCliSettings,
+                    nugetDownloadSettings,
+                    logger);
 
-                            var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
-                                NuGetPackageVersion.LatestAvailable);
-                            var nugetPackageSettings = new NugetPackageSettings(false,
-                                nugetConfigFile: nugetConfigFile,
-                                nugetSource: nugetSource);
+            var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
+                NuGetPackageVersion.LatestAvailable);
+            var nugetPackageSettings = new NugetPackageSettings(false,
+                nugetSource,
+                nugetConfigFile);
 
-                            DirectoryInfo installBaseDirectory = packagesTempDir.Directory;
+            DirectoryInfo? installBaseDirectory = packagesTempDir.Directory;
 
-                            NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(
-                                nuGetPackage,
-                                nugetPackageSettings,
-                                httpClient,
-                                installBaseDirectory).ConfigureAwait(false);
+            NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(
+                nuGetPackage,
+                nugetPackageSettings,
+                httpClient,
+                installBaseDirectory).ConfigureAwait(false);
 
-                            Assert.NotNull(nuGetPackageInstallResult);
-                            Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
+            Assert.NotNull(nuGetPackageInstallResult);
+            Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
 
-                            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
-                            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
-                            _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId?.PackageId);
+            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+            _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
-                            Assert.Equal("1.0.0", nuGetPackageInstallResult.SemanticVersion.ToNormalizedString());
-                        }
-                    }
-                }
-            }
+            Assert.Equal("1.0.0", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
         }
     }
 }

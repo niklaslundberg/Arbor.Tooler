@@ -9,8 +9,8 @@ namespace Arbor.Tooler
     {
         public NuGetPackageInstallResult(
             [NotNull] NuGetPackageId nugetPackageNuGetPackageId,
-            [CanBeNull] SemanticVersion semanticVersion,
-            [CanBeNull] DirectoryInfo packageDirectory)
+            SemanticVersion? semanticVersion,
+            DirectoryInfo? packageDirectory)
         {
             NuGetPackageId = nugetPackageNuGetPackageId ??
                              throw new ArgumentNullException(nameof(nugetPackageNuGetPackageId));
@@ -20,9 +20,9 @@ namespace Arbor.Tooler
 
         public NuGetPackageId NuGetPackageId { get; }
 
-        public SemanticVersion SemanticVersion { get; }
+        public SemanticVersion? SemanticVersion { get; }
 
-        public DirectoryInfo PackageDirectory { get; }
+        public DirectoryInfo? PackageDirectory { get; }
 
         public static NuGetPackageInstallResult Failed([NotNull] NuGetPackageId nugetPackageId)
         {

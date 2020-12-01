@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Net;
 
 namespace Arbor.Tooler
 {
-    public class NuGetDownloadResult
+    public sealed class NuGetDownloadResult
     {
         public static readonly NuGetDownloadResult Disabled = new NuGetDownloadResult(nameof(Disabled));
 
@@ -27,13 +28,13 @@ namespace Arbor.Tooler
 
         private NuGetDownloadResult(Exception exception) => Exception = exception;
 
-        public string NuGetExePath { get; }
+        public string? NuGetExePath { get; }
 
-        public string Result { get; }
+        public string? Result { get; }
 
         public bool Succeeded { get; }
 
-        public Exception Exception { get; }
+        public Exception? Exception { get; }
 
         public static NuGetDownloadResult FromException(Exception exception) => new NuGetDownloadResult(exception);
 
@@ -45,5 +46,8 @@ namespace Arbor.Tooler
 
         public override string ToString() =>
             $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
+
+        public static NuGetDownloadResult DownloadFailed(HttpStatusCode statusCode) => new NuGetDownloadResult($"Http download status code was {(int)statusCode}", succeeded: false);
+        public static NuGetDownloadResult DownloadFailed(string message) => new NuGetDownloadResult(message, succeeded: false);
     }
 }

@@ -4,13 +4,13 @@ namespace Arbor.Tooler
 {
     public class NuGetCliSettings
     {
-        private static readonly Lazy<NuGetCliSettings> _Default =
+        private static readonly Lazy<NuGetCliSettings> DefaultSettings =
             new Lazy<NuGetCliSettings>(() => new NuGetCliSettings());
 
         public NuGetCliSettings(
-            string nugetSourceName = null,
-            string nugetConfigFile = null,
-            string nuGetExePath = null,
+            string? nugetSourceName = null,
+            string? nugetConfigFile = null,
+            string? nuGetExePath = null,
             bool adaptivePackagePrefixEnabled = true)
         {
             NugetSourceName = nugetSourceName;
@@ -19,15 +19,15 @@ namespace Arbor.Tooler
             AdaptivePackagePrefixEnabled = adaptivePackagePrefixEnabled;
         }
 
-        public string NugetSourceName { get; }
+        public string? NugetSourceName { get; }
 
-        public string NugetConfigFile { get; }
+        public string? NugetConfigFile { get; }
 
-        public string NuGetExePath { get; }
+        public string? NuGetExePath { get; }
 
         public bool AdaptivePackagePrefixEnabled { get; }
 
-        public static NuGetCliSettings Default => _Default.Value;
+        public static NuGetCliSettings Default => DefaultSettings.Value;
 
         public override string ToString() =>
             $"{nameof(NugetSourceName)}: {NugetSourceName}, {nameof(NugetConfigFile)}: {NugetConfigFile}, {nameof(NuGetExePath)}: {NuGetExePath}";
