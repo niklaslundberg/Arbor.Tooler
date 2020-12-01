@@ -151,9 +151,9 @@ namespace Arbor.Tooler
 
                         if (adaptiveEnabledValue)
                         {
-                            string[]? packageLines = lines.Where(line =>
+                            string[] packageLines = lines.Where(line =>
                                 !ignoredOutputStatements.Any(ignored =>
-                                    line.IndexOf(ignored, StringComparison.OrdinalIgnoreCase) >= 0)).ToArray();
+                                    line.Contains(ignored, StringComparison.OrdinalIgnoreCase))).ToArray();
 
                             int packageLineCount = packageLines.Length;
 
@@ -213,7 +213,7 @@ namespace Arbor.Tooler
             var included = lines
                 .Where(line => line != null && !ignoredOutputStatements
                                    .Any(ignored =>
-                                       line.IndexOf(ignored, StringComparison.InvariantCultureIgnoreCase) >= 0))
+                                       line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
                 .ToList();
 
             var items = included.Select(
@@ -549,7 +549,7 @@ namespace Arbor.Tooler
                 tempDirectory.Directory.FullName,
                 searchPattern);
 
-            DirectoryInfo packageDirectory =
+            DirectoryInfo? packageDirectory =
                 tempDirectory.Directory.GetDirectories(searchPattern)
                     .SingleOrDefault();
 

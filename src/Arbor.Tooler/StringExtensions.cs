@@ -2,14 +2,6 @@
 {
     internal static class StringExtensions
     {
-        public static  string? WithDefault(this  string?  value, string? defaultValue)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return defaultValue;
-            }
-
-            return value;
-        }
+        public static string? WithDefault(this string? value, string? defaultValue) => string.IsNullOrWhiteSpace(value) ? defaultValue : value;
     }
 }

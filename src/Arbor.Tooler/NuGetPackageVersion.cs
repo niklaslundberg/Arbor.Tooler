@@ -19,7 +19,7 @@ namespace Arbor.Tooler
         {
             if (string.IsNullOrWhiteSpace(version))
             {
-                throw new ArgumentException(nameof(version));
+                throw new ArgumentNullException(nameof(version));
             }
 
             SemanticVersion = null;

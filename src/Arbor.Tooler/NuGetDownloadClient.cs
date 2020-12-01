@@ -47,7 +47,7 @@ namespace Arbor.Tooler
                             return NuGetDownloadResult.DownloadFailed(httpResponseMessage.StatusCode);
                         }
 
-                        using Stream downloadStream =
+                        await using Stream downloadStream =
                             await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
                         const int defaultBufferSize = 8192;
                         await downloadStream.CopyToAsync(nugetExeFileStream,
@@ -399,7 +399,7 @@ namespace Arbor.Tooler
                     nuGetDownloadSettings.NugetDownloadUriFormat.WithDefault(NuGetDownloadSettings
                         .DefaultNuGetExeDownloadUriFormat)!;
 
-                string downloadUri = downloadUriFormat.IndexOf("{0}", StringComparison.OrdinalIgnoreCase) >= 0
+                string downloadUri = downloadUriFormat.Contains("{0}", StringComparison.OrdinalIgnoreCase)
                     ? string.Format(downloadUriFormat, nuGetDownloadSettings.NugetExeVersion)
                     : downloadUriFormat;
 

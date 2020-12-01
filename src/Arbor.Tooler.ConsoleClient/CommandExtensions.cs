@@ -12,7 +12,7 @@ namespace Arbor.Tooler.ConsoleClient
 
         public static string? GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
-            string foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
+            string? foundPair = keys.SingleOrDefault(k => k.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
 
             if (foundPair is null)
             {
