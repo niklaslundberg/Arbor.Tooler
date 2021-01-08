@@ -30,8 +30,6 @@ namespace Arbor.Tooler
 
         public string Version { get; }
 
-        public override bool Equals(object? obj) => Equals(obj as NuGetPackageVersion);
-
         public bool Equals(NuGetPackageVersion? other)
         {
             if (other is null)
@@ -47,11 +45,13 @@ namespace Arbor.Tooler
             return string.Equals(Version, other.Version, StringComparison.OrdinalIgnoreCase);
         }
 
+        public override bool Equals(object? obj) => Equals(obj as NuGetPackageVersion);
+
         public static bool operator ==(NuGetPackageVersion left, NuGetPackageVersion right) => Equals(left, right);
 
         public static bool operator !=(NuGetPackageVersion left, NuGetPackageVersion right) => !Equals(left, right);
 
-        public static bool TryParse(string version, out NuGetPackageVersion nuGetPackageVersion)
+        public static bool TryParse(string? version, out NuGetPackageVersion nuGetPackageVersion)
         {
             if (string.IsNullOrWhiteSpace(version))
             {
@@ -80,6 +80,7 @@ namespace Arbor.Tooler
             nuGetPackageVersion = new NuGetPackageVersion(semanticVersion);
             return true;
         }
+
         public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(Version);
 
         public override string ToString()
