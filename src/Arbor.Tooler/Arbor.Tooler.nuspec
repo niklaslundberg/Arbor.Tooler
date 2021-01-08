@@ -21,11 +21,11 @@
     <iconUrl>https://nuget.org/Content/Images/packageDefaultIcon-50x50.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <copyright>Copyright Niklas Lundberg 2018-2020</copyright>
+    <copyright>Copyright Niklas Lundberg 2018-2021</copyright>
     <dependencies>
       <dependency id="NuGet.Versioning" version="[5.0.0,6.0.0)" />
       <dependency id="Serilog" version="[2.8.0,3.0.0)" />
-      <dependency id="Arbor.Processing" version="0.4.0" />
+      <dependency id="Arbor.Processing" version="0.6.0" />
     </dependencies>
     <references></references>
     <tags></tags>
