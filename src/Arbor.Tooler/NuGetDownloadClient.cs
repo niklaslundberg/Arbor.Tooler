@@ -276,7 +276,7 @@ namespace Arbor.Tooler
 
                 var deserializedAnonymousType = JsonConvert.DeserializeAnonymousType(json, sample);
 
-                var availableVersions = deserializedAnonymousType.artifacts
+                var availableVersions = deserializedAnonymousType?.artifacts
                     .SingleOrDefault(artifact =>
                         artifact.name.Equals("win-x86-commandline", StringComparison.OrdinalIgnoreCase))
                     ?.versions
