@@ -101,7 +101,7 @@ namespace Arbor.Tooler
             return allVersions;
         }
 
-        public Task<ImmutableArray<SemanticVersion>> GetAllVersionsAsync(
+        public async Task<ImmutableArray<SemanticVersion>> GetAllVersionsAsync(
             NuGetPackageId packageId,
             string? nugetExePath = null,
             string? nuGetSource = null,
@@ -117,7 +117,7 @@ namespace Arbor.Tooler
                 using var client = new HttpClient();
                 using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds ?? 30));
 
-                return GetAllVersionsFromApiInternalAsync(
+                return await GetAllVersionsFromApiInternalAsync(
                     packageId,
                     nuGetSource,
                     nugetConfig,
@@ -127,7 +127,7 @@ namespace Arbor.Tooler
                     tokenSource.Token);
             }
 
-            return GetAllVersionsInternalAsync(
+            return await GetAllVersionsInternalAsync(
                 packageId,
                 nugetExePath,
                 nuGetSource,
