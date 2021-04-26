@@ -9,10 +9,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Arbor.Processing;
 using JetBrains.Annotations;
+using NuGet.Common;
+using NuGet.Configuration;
+using NuGet.Packaging;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
-using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using ILogger = Serilog.ILogger;
 
 namespace Arbor.Tooler
 {
@@ -50,14 +55,15 @@ namespace Arbor.Tooler
             string? nugetConfig = null,
             bool? adaptiveEnabled = null)
         {
-            ImmutableArray<SemanticVersion> allVersions = await GetAllVersionsAsync(packageId,
+            var allVersions = await GetAllVersionsAsync(
+                packageId,
                 nugetExePath,
                 nuGetSource,
                 allowPreRelease,
                 prefix,
                 timeoutInSeconds,
                 nugetConfig,
-                adaptiveEnabled).ConfigureAwait(false);
+                adaptiveEnabled).ConfigureAwait(continueOnCapturedContext: false);
 
             if (allVersions.Length == 0)
             {
@@ -65,6 +71,34 @@ namespace Arbor.Tooler
             }
 
             return allVersions.Max();
+        }
+
+        public async Task<ImmutableArray<SemanticVersion>> GetAllVersions(
+            NuGetPackageId packageId,
+            string? nuGetSource = default,
+            string? nugetConfig = default,
+            bool allowPreRelease = false,
+            HttpClient? httpClient = default,
+            ILogger? logger = default,
+            CancellationToken cancellationToken = default)
+        {
+            bool clientOwned = httpClient is null;
+
+            var allVersions = await GetAllVersionsFromApiInternalAsync(
+                packageId,
+                nuGetSource,
+                nugetConfig,
+                allowPreRelease,
+                httpClient ?? new HttpClient(),
+                logger ?? Logger.None,
+                cancellationToken);
+
+            if (clientOwned)
+            {
+                httpClient?.Dispose();
+            }
+
+            return allVersions;
         }
 
         public Task<ImmutableArray<SemanticVersion>> GetAllVersionsAsync(
@@ -75,8 +109,26 @@ namespace Arbor.Tooler
             string? prefix = DefaultPrefixPackageId,
             int? timeoutInSeconds = 30,
             string? nugetConfig = null,
-            bool? adaptiveEnabled = null) =>
-            GetAllVersionsInternalAsync(packageId,
+            bool? adaptiveEnabled = null,
+            bool useCli = false)
+        {
+            if (!useCli)
+            {
+                using var client = new HttpClient();
+                using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds ?? 30));
+
+                return GetAllVersionsFromApiInternalAsync(
+                    packageId,
+                    nuGetSource,
+                    nugetConfig,
+                    allowPreRelease,
+                    client,
+                    Logger.None,
+                    tokenSource.Token);
+            }
+
+            return GetAllVersionsInternalAsync(
+                packageId,
                 nugetExePath,
                 nuGetSource,
                 allowPreRelease,
@@ -84,6 +136,103 @@ namespace Arbor.Tooler
                 timeoutInSeconds,
                 nugetConfig,
                 adaptiveEnabled: adaptiveEnabled);
+        }
+
+        private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsFromApiInternalAsync(
+            NuGetPackageId packageId,
+            string? nuGetSource,
+            string? nugetConfig,
+            bool allowPreRelease,
+            HttpClient httpClient,
+            ILogger logger,
+            CancellationToken cancellationToken)
+        {
+            ISettings? settings = null;
+
+            if (!string.IsNullOrWhiteSpace(nugetConfig))
+            {
+                var fileInfo = new FileInfo(nugetConfig);
+                settings = Settings.LoadSpecificSettings(fileInfo.Directory!.FullName, fileInfo.Name);
+            }
+
+            string? currentDirectory = Directory.GetCurrentDirectory();
+
+            settings ??= Settings.LoadDefaultSettings(
+                currentDirectory,
+                configFileName: null,
+                new XPlatMachineWideSetting());
+
+            var sources = SettingsUtility.GetEnabledSources(settings);
+
+            var cache = new SourceCacheContext();
+
+            NuGet.Common.ILogger nugetLogger = GetLogger(logger);
+
+            var semanticVersions = new HashSet<SemanticVersion>();
+
+            foreach (var packageSource in sources.Where(s => s.IsHttp))
+            {
+                if (!string.IsNullOrWhiteSpace(nuGetSource)
+                    && !packageSource.Name.Equals(nuGetSource, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                bool isV3Feed;
+
+                if (packageSource.ProtocolVersion == 3)
+                {
+                    isV3Feed = true;
+                }
+                else
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Head, packageSource.SourceUri);
+                    var response = await httpClient.SendAsync(request, cancellationToken);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        continue;
+                    }
+
+                    isV3Feed = response.Content.Headers.ContentType.MediaType.Contains(
+                        "json",
+                        StringComparison.OrdinalIgnoreCase);
+                }
+
+                SourceRepository repository = isV3Feed
+                    ? Repository.Factory.GetCoreV3(packageSource.SourceUri.ToString())
+                    : Repository.Factory.GetCoreV2(packageSource);
+
+                FindPackageByIdResource resource =
+                    await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
+
+                IEnumerable<NuGetVersion> versions = await resource.GetAllVersionsAsync(
+                    packageId.PackageId,
+                    cache,
+                    nugetLogger,
+                    cancellationToken);
+
+                semanticVersions.AddRange(
+                    versions
+                        .Where(nuGetVersion => SemanticVersion.TryParse(nuGetVersion.OriginalVersion, out _))
+                        .Select(nuGetVersion => SemanticVersion.Parse(nuGetVersion.OriginalVersion)));
+            }
+
+            return (allowPreRelease
+                    ? semanticVersions
+                    : semanticVersions.Where(semanticVersion => !semanticVersion.IsPrerelease))
+                .ToImmutableArray();
+        }
+
+        private NuGet.Common.ILogger GetLogger(ILogger logger)
+        {
+            if (logger == Logger.None)
+            {
+                return NullLogger.Instance;
+            }
+
+            return new SerilogNuGetAdapter(logger);
+        }
 
         private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsInternalAsync(
             NuGetPackageId packageId,
@@ -96,7 +245,9 @@ namespace Arbor.Tooler
             bool firstAttempt = true,
             bool? adaptiveEnabled = null)
         {
-            bool adaptiveEnabledValue = _nugetCliSettings.AdaptivePackagePrefixEnabled && (!adaptiveEnabled.HasValue || adaptiveEnabled.Value);
+            bool adaptiveEnabledValue = _nugetCliSettings.AdaptivePackagePrefixEnabled &&
+                                        (!adaptiveEnabled.HasValue || adaptiveEnabled.Value);
+
             if (adaptiveEnabledValue)
             {
                 prefix ??= GetPrefix(nugetConfig, nuGetSource);
@@ -127,18 +278,23 @@ namespace Arbor.Tooler
 
             if (string.IsNullOrWhiteSpace(nugetExePath))
             {
-                _logger.Debug("nuget.exe path is not specified when getting all package versions for {PackageId}",
+                _logger.Debug(
+                    "nuget.exe path is not specified when getting all package versions for {PackageId}",
                     packageId.PackageId);
-                nugetExePath = await GetNuGetExePathAsync(cancellationToken: tokenSource.Token).ConfigureAwait(false);
+
+                nugetExePath = await GetNuGetExePathAsync(cancellationToken: tokenSource.Token)
+                    .ConfigureAwait(continueOnCapturedContext: false);
             }
 
             _logger.Information("Getting available versions of package id {PackageId}", packageId.PackageId);
 
             var ignoredOutputStatements =
                 new List<string> {"Using credentials", "No packages found", "MSBuild auto-detection"};
+
             var lines = new List<string>();
             ExitCode exitCode;
             bool isExplicitlyCancelledWithPackageIdMismatch = false;
+
             try
             {
                 exitCode = await ProcessRunner.ExecuteProcessAsync(
@@ -151,18 +307,22 @@ namespace Arbor.Tooler
 
                         if (adaptiveEnabledValue)
                         {
-                            string[] packageLines = lines.Where(line =>
-                                !ignoredOutputStatements.Any(ignored =>
-                                    line.Contains(ignored, StringComparison.OrdinalIgnoreCase))).ToArray();
+                            string[] packageLines = lines.Where(
+                                line =>
+                                    !ignoredOutputStatements.Any(
+                                        ignored =>
+                                            line.Contains(ignored, StringComparison.OrdinalIgnoreCase))).ToArray();
 
                             int packageLineCount = packageLines.Length;
 
-                            if (packageLineCount > 5 && packageLines.Any(line =>
-                                !line.StartsWith(packageId.PackageId, StringComparison.OrdinalIgnoreCase)))
+                            if (packageLineCount > 5 && packageLines.Any(
+                                line =>
+                                    !line.StartsWith(packageId.PackageId, StringComparison.OrdinalIgnoreCase)))
                             {
                                 _logger.Warning(
                                     "Got packages with other IDs than {PackageId}, aborting package version listing",
                                     packageId.PackageId);
+
                                 isExplicitlyCancelledWithPackageIdMismatch = true;
                                 tokenSource.Cancel();
                             }
@@ -172,7 +332,7 @@ namespace Arbor.Tooler
                     debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
                     verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
                     toolAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
-                    cancellationToken: tokenSource.Token).ConfigureAwait(false);
+                    cancellationToken: tokenSource.Token).ConfigureAwait(continueOnCapturedContext: false);
             }
             catch (Exception ex)
             {
@@ -183,7 +343,7 @@ namespace Arbor.Tooler
                     && string.IsNullOrWhiteSpace(prefix)
                     && firstAttempt)
                 {
-                    ImmutableArray<SemanticVersion> allVersionsWithPrefix = await GetAllVersionsInternalAsync(
+                    var allVersionsWithPrefix = await GetAllVersionsInternalAsync(
                         packageId,
                         nugetExePath,
                         nuGetSource,
@@ -191,12 +351,13 @@ namespace Arbor.Tooler
                         DefaultPrefixPackageId,
                         timeoutInSeconds,
                         nugetConfig,
-                        false,
-                        adaptiveEnabled).ConfigureAwait(false);
+                        firstAttempt: false,
+                        adaptiveEnabled).ConfigureAwait(continueOnCapturedContext: false);
 
                     if (allVersionsWithPrefix.Length > 0)
                     {
                         SetPrefix(nugetConfig, nuGetSource, DefaultPrefixPackageId);
+
                         return allVersionsWithPrefix;
                     }
                 }
@@ -207,19 +368,22 @@ namespace Arbor.Tooler
             if (!exitCode.IsSuccess)
             {
                 _logger.Warning("Package listing failed with exit code {ExitCode}", exitCode);
+
                 return ImmutableArray<SemanticVersion>.Empty;
             }
 
             var included = lines
-                .Where(line => line != null && !ignoredOutputStatements
-                                   .Any(ignored =>
-                                       line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
+                .Where(
+                    line => line != null && !ignoredOutputStatements
+                        .Any(
+                            ignored =>
+                                line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
                 .ToList();
 
             var items = included.Select(
                     package =>
                     {
-                        string[]? parts = package.Split(' ');
+                        string[] parts = package.Split(separator: ' ');
 
                         string currentPackageId = parts[0].Trim();
 
@@ -233,6 +397,7 @@ namespace Arbor.Tooler
                                     "Found package version {Version} for package {Package}, skipping because it could not be parsed as semantic version",
                                     version,
                                     currentPackageId);
+
                                 return null;
                             }
 
@@ -251,6 +416,7 @@ namespace Arbor.Tooler
                         catch (Exception ex)
                         {
                             _logger.Warning(ex, "Error parsing package '{Package}'", package);
+
                             return null;
                         }
                     })
@@ -261,8 +427,10 @@ namespace Arbor.Tooler
 
             foreach (NuGetPackage nuGetPackage in items)
             {
-                _logger.Debug("Found package {PackageId} {PackageVersion}", nuGetPackage.NuGetPackageId.PackageId,
-                    nuGetPackage.NuGetPackageVersion?.SemanticVersion?.ToNormalizedString());
+                _logger.Debug(
+                    "Found package {PackageId} {PackageVersion}",
+                    nuGetPackage.NuGetPackageId.PackageId,
+                    nuGetPackage.NuGetPackageVersion.SemanticVersion?.ToNormalizedString());
             }
 
             if (items.Length == 0
@@ -272,9 +440,10 @@ namespace Arbor.Tooler
             {
                 _logger.Debug(
                     "Could not find any package versions of {PackageId} when using prefix '{Prefix}', getting all NuGet versions without any prefix in search",
-                    packageId.PackageId, prefix);
+                    packageId.PackageId,
+                    prefix);
 
-                ImmutableArray<SemanticVersion> allVersions = await GetAllVersionsInternalAsync(
+                var allVersions = await GetAllVersionsInternalAsync(
                     packageId,
                     nugetExePath,
                     nuGetSource,
@@ -282,13 +451,16 @@ namespace Arbor.Tooler
                     "",
                     timeoutInSeconds,
                     nugetConfig,
-                    false,
-                    adaptiveEnabled).ConfigureAwait(false);
+                    firstAttempt: false,
+                    adaptiveEnabled).ConfigureAwait(continueOnCapturedContext: false);
 
                 if (allVersions.Length > 0)
                 {
-                    _logger.Debug("Found {Count} versions of {PackageId} when removing prefix", allVersions.Length,
+                    _logger.Debug(
+                        "Found {Count} versions of {PackageId} when removing prefix",
+                        allVersions.Length,
                         packageId.PackageId);
+
                     SetPrefix(nugetConfig, nuGetSource, "");
                 }
 
@@ -321,16 +493,18 @@ namespace Arbor.Tooler
             return prefix;
         }
 
-        private static string GetConfigSourceKey(string? nugetConfig, string? nuGetSource) => $"{nugetConfig}_$$$_{nuGetSource}";
+        private static string GetConfigSourceKey(string? nugetConfig, string? nuGetSource) =>
+            $"{nugetConfig}_$$$_{nuGetSource}";
 
-        private static (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) GetDownloadedPackage(
+        private static (DirectoryInfo? Directory, SemanticVersion SemanticVersion, bool Parsed) GetDownloadedPackage(
             NuGetPackage nugetPackage,
             (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] downloadedPackages)
         {
-            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) downloadedPackage =
-                downloadedPackages.SingleOrDefault(package =>
-                    package.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion
-                    && package.Directory.EnumerateFiles("*.nupkg", SearchOption.AllDirectories).Any());
+            var downloadedPackage =
+                downloadedPackages.SingleOrDefault(
+                    package =>
+                        package.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion
+                        && package.Directory.EnumerateFiles("*.nupkg", SearchOption.AllDirectories).Any());
 
             return downloadedPackage;
         }
@@ -341,22 +515,26 @@ namespace Arbor.Tooler
         {
             IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> versionDirectories =
                 packageBaseDir.EnumerateDirectories()
-                    .Select(dir =>
-                    {
-                        bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
+                    .Select(
+                        dir =>
+                        {
+                            bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
 
-                        return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
-                    })
-                    .Where(tuple => tuple.Parsed
-                                    && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
+                            return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
+                        })
+                    .Where(
+                        tuple => tuple.Parsed
+                                 && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
 
             IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> filtered =
                 versionDirectories;
 
             if (!nugetPackageSettings.AllowPreRelease)
             {
-                _logger.Debug("Filtering out pre-release versions in package directory '{PackageDirectory}'",
+                _logger.Debug(
+                    "Filtering out pre-release versions in package directory '{PackageDirectory}'",
                     packageBaseDir);
+
                 filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
             }
 
@@ -377,10 +555,11 @@ namespace Arbor.Tooler
             }
 
             NuGetDownloadResult nugetDownloadResult =
-                await _nugetDownloadClient.DownloadNuGetAsync(_nugetDownloadSettings,
+                await _nugetDownloadClient.DownloadNuGetAsync(
+                    _nugetDownloadSettings,
                     _logger,
                     httpClient,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 
             if (!nugetDownloadResult.Succeeded)
             {
@@ -408,7 +587,7 @@ namespace Arbor.Tooler
 
         public async Task<NuGetPackageInstallResult> InstallPackageAsync(
             NuGetPackage nugetPackage,
-            NugetPackageSettings nugetPackageSettings,
+            NugetPackageSettings? nugetPackageSettings = default,
             HttpClient? httpClient = default,
             DirectoryInfo? installBaseDirectory = default,
             CancellationToken cancellationToken = default)
@@ -424,7 +603,8 @@ namespace Arbor.Tooler
 
             DirectoryInfo packageInstallBaseDirectory = (installBaseDirectory ?? fallbackDirectory).EnsureExists();
 
-            _logger.Debug("Using package install base directory '{PackageBaseDirectory}'",
+            _logger.Debug(
+                "Using package install base directory '{PackageBaseDirectory}'",
                 packageInstallBaseDirectory.FullName);
 
             DirectoryInfo packageBaseDir = DirectoryHelper
@@ -440,7 +620,7 @@ namespace Arbor.Tooler
             {
                 if (downloadedPackages.Length > 0)
                 {
-                    (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) latest =
+                    var latest =
                         downloadedPackages.OrderByDescending(version => version.SemanticVersion).First();
 
                     _logger.Debug(
@@ -458,7 +638,7 @@ namespace Arbor.Tooler
 
             if (nugetPackage.NuGetPackageVersion.SemanticVersion != null)
             {
-                (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) downloadedPackage =
+                var downloadedPackage =
                     GetDownloadedPackage(nugetPackage, downloadedPackages);
 
                 if (downloadedPackage != default)
@@ -468,13 +648,15 @@ namespace Arbor.Tooler
                         nugetPackage.NuGetPackageId.PackageId,
                         nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
 
-                    return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+                    return new NuGetPackageInstallResult(
+                        nugetPackage.NuGetPackageId,
                         downloadedPackage.SemanticVersion,
                         downloadedPackage.Directory);
                 }
             }
 
-            string? nugetExePath = await GetNuGetExePathAsync(httpClient, cancellationToken).ConfigureAwait(false);
+            string? nugetExePath = await GetNuGetExePathAsync(httpClient, cancellationToken)
+                .ConfigureAwait(continueOnCapturedContext: false);
 
             var arguments = new List<string> {"install", nugetPackage.NuGetPackageId.PackageId};
 
@@ -482,8 +664,10 @@ namespace Arbor.Tooler
             {
                 if (!File.Exists(nugetPackageSettings.NugetConfigFile))
                 {
-                    _logger.Error("The specified NuGetConfig file {NuGetConfigFile} does not exist",
+                    _logger.Error(
+                        "The specified NuGetConfig file {NuGetConfigFile} does not exist",
                         nugetPackageSettings.NugetConfigFile);
+
                     return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
                 }
 
@@ -524,7 +708,7 @@ namespace Arbor.Tooler
 
             _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
 
-            ExitCode exitCode = await ProcessRunner.ExecuteProcessAsync(
+            var exitCode = await ProcessRunner.ExecuteProcessAsync(
                 nugetExePath,
                 arguments,
                 (message, category) => _logger.Information("{Category} {Message}", category, message),
@@ -532,24 +716,27 @@ namespace Arbor.Tooler
                 debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
                 verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
                 toolAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+                cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 
             if (!exitCode.IsSuccess)
             {
-                _logger.Error("The process {Process} with arguments {Arguments} failed with exit code {ExitCode}",
+                _logger.Error(
+                    "The process {Process} with arguments {Arguments} failed with exit code {ExitCode}",
                     nugetExePath,
                     arguments,
                     exitCode);
+
                 return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
             }
 
             string searchPattern = $"{nugetPackage.NuGetPackageId.PackageId}.*";
 
-            _logger.Debug("Looking for directories in '{Directory}' matching pattern {Pattern}",
+            _logger.Debug(
+                "Looking for directories in '{Directory}' matching pattern {Pattern}",
                 tempDirectory.Directory.FullName,
                 searchPattern);
 
-            DirectoryInfo? packageDirectory =
+            var packageDirectory =
                 tempDirectory.Directory.GetDirectories(searchPattern)
                     .SingleOrDefault();
 
@@ -559,12 +746,14 @@ namespace Arbor.Tooler
                     "The expected package package directory '{PackageId}' in temp directory '{FullName}' does not exist",
                     nugetPackage.NuGetPackageId.PackageId,
                     tempDirectory.Directory.FullName);
+
                 return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
             }
 
             string packagePattern = $"{nugetPackage.NuGetPackageId.PackageId}.*.nupkg";
 
-            _logger.Debug("Looking for packages in '{Directory}' matching pattern {Pattern}",
+            _logger.Debug(
+                "Looking for packages in '{Directory}' matching pattern {Pattern}",
                 tempDirectory.Directory.FullName,
                 packagePattern);
 
@@ -573,9 +762,11 @@ namespace Arbor.Tooler
 
             if (nugetPackageFiles.Length == 0)
             {
-                _logger.Error("Could not find expected package {NuGetPackageId} in temp directory '{FullName}'",
+                _logger.Error(
+                    "Could not find expected package {NuGetPackageId} in temp directory '{FullName}'",
                     nugetPackage.NuGetPackageId,
                     packageDirectory.FullName);
+
                 return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
             }
 
@@ -586,33 +777,40 @@ namespace Arbor.Tooler
                     nugetPackage.NuGetPackageId,
                     packageDirectory.FullName,
                     nugetPackageFiles.Length);
+
                 return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
             }
 
             FileInfo nugetPackageFile = nugetPackageFiles.Single();
 
             string nugetPackageFileVersion = Path.GetFileNameWithoutExtension(nugetPackageFile.Name)
-[(nugetPackage.NuGetPackageId.PackageId.Length + 1)..];
+                [(nugetPackage.NuGetPackageId.PackageId.Length + 1)..];
 
-            if (!SemanticVersion.TryParse(nugetPackageFileVersion,
+            if (!SemanticVersion.TryParse(
+                nugetPackageFileVersion,
                 out SemanticVersion nugetPackageFileSemanticVersion))
             {
-                _logger.Error("The downloaded file '{FullName}' is not a semantic version nuget package",
+                _logger.Error(
+                    "The downloaded file '{FullName}' is not a semantic version nuget package",
                     nugetPackageFile.FullName);
+
                 return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
             }
 
-            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed) existingPackage =
+            var existingPackage =
                 GetDownloadedPackage(nugetPackage, downloadedPackages);
 
             if (existingPackage != default && existingPackage.Directory != null)
             {
-                var nuGetPackageInstallResult = new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+                var nuGetPackageInstallResult = new NuGetPackageInstallResult(
+                    nugetPackage.NuGetPackageId,
                     existingPackage.SemanticVersion,
                     existingPackage.Directory);
 
-                _logger.Debug("Returning existing package result {NuGetPackageInstallResult}",
+                _logger.Debug(
+                    "Returning existing package result {NuGetPackageInstallResult}",
                     nuGetPackageInstallResult);
+
                 return nuGetPackageInstallResult;
             }
 
@@ -622,7 +820,8 @@ namespace Arbor.Tooler
 
             if (directoryInfos.Length != 1)
             {
-                _logger.Error("Expected exactly 1 directory to exist in '{TempDir}' but found {ActualFoundLength}",
+                _logger.Error(
+                    "Expected exactly 1 directory to exist in '{TempDir}' but found {ActualFoundLength}",
                     tempDirectory.Directory.FullName,
                     directoryInfos.Length);
 
@@ -631,7 +830,8 @@ namespace Arbor.Tooler
 
             DirectoryInfo workDir = directoryInfos.Single();
 
-            DirectoryInfo targetPackageDirectory = DirectoryHelper.FromPathSegments(packageBaseDir.FullName,
+            DirectoryInfo targetPackageDirectory = DirectoryHelper.FromPathSegments(
+                packageBaseDir.FullName,
                 nugetPackageFileSemanticVersion.ToNormalizedString());
 
             targetPackageDirectory.EnsureExists();
