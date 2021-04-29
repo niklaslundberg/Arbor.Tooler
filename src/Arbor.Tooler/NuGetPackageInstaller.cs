@@ -206,7 +206,7 @@ namespace Arbor.Tooler
                 FindPackageByIdResource resource =
                     await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
 
-                IEnumerable<NuGetVersion> versions = (await resource.GetAllVersionsAsync(
+                var versions = (await resource.GetAllVersionsAsync(
                     packageId.PackageId,
                     cache,
                     nugetLogger,
@@ -242,9 +242,9 @@ namespace Arbor.Tooler
 
             if (response.IsSuccessStatusCode)
             {
-                isV3Feed = response.Content.Headers.ContentType.MediaType.Contains(
+                isV3Feed = response?.Content?.Headers?.ContentType?.MediaType?.Contains(
                     "json",
-                    StringComparison.OrdinalIgnoreCase);
+                    StringComparison.OrdinalIgnoreCase) ?? false;
             }
             else
             {
