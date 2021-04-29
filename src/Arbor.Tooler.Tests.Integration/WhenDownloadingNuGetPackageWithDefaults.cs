@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Arbor.Aesculus.NCrunch;
 using Serilog;
 using Serilog.Core;
 using Xunit;
@@ -28,7 +29,7 @@ namespace Arbor.Tooler.Tests.Integration
             var nugetDownloadSettings =
                 new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory?.FullName);
 
-            string nugetConfigFile = Path.Combine(VcsTestPathHelper.FindVcsRootPath(),
+            string nugetConfigFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath(),
                 "src",
                 "Arbor.Tooler.Tests.Integration",
                 "testconfig",
