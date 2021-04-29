@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using Arbor.Aesculus.NCrunch;
 using FluentAssertions;
 using Xunit;
 
@@ -12,9 +13,9 @@ namespace Arbor.Tooler.Tests.Integration
         {
             var nuGetPackageInstaller = new NuGetPackageInstaller();
 
-            Directory.SetCurrentDirectory(VcsTestPathHelper.FindVcsRootPath());
+            Directory.SetCurrentDirectory(VcsTestPathHelper.TryFindVcsRootPath());
 
-            var packageVersions = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId("Newtonsoft.Json"));
+            var packageVersions = await nuGetPackageInstaller.GetAllVersions(new NuGetPackageId("Newtonsoft.Json"));
 
             packageVersions.Should().NotBeEmpty();
         }

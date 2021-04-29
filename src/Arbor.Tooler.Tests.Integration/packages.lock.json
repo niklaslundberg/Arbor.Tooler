@@ -4,9 +4,19 @@
     ".NETCoreApp,Version=v3.1": {
       "Arbor.Aesculus": {
         "type": "Direct",
-        "requested": "[3.0.2, )",
-        "resolved": "3.0.2",
-        "contentHash": "YWFdVy4MjN/pmh3FueugcOVhgQY82+hcivmXuWQBxlEPwrZ0E+3KgGsrnq/QjCntDfrSk5XB+Dw+Zlpsv0mQ9A=="
+        "requested": "[3.2.0, )",
+        "resolved": "3.2.0",
+        "contentHash": "bguLsxf5ntYjX4z3SeXbQkwKskDSL5au9lWV8VQCYb6oN0TXPHv5LSfOlbT+emm4X6Xodvy3R293PzFdp1RK8A=="
+      },
+      "Arbor.Aesculus.NCrunch": {
+        "type": "Direct",
+        "requested": "[3.2.0, )",
+        "resolved": "3.2.0",
+        "contentHash": "EZ1f8XhSxCEI80niY7rUkiDHr92nqjvPReQU4r0LLWEsIEIkB6Kxd4CEjyHq1BkYjii3pe+sm4U1U/6Tp6q50Q==",
+        "dependencies": {
+          "Arbor.Aesculus": "3.2.0",
+          "NCrunch.Framework": "4.7.0"
+        }
       },
       "FluentAssertions": {
         "type": "Direct",
@@ -336,17 +346,6 @@
         "resolved": "2.10.0",
         "contentHash": "+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA=="
       },
-      "Serilog.Sinks.Console": {
-        "type": "Transitive",
-        "resolved": "3.1.1",
-        "contentHash": "56mI5AqvyF/i/c2451nvV71kq370XOCE4Uu5qiaJ295sOhMb9q3BWwG7mWLOVSnmpWiq0SBT3SXfgRXGNP6vzA==",
-        "dependencies": {
-          "Serilog": "2.5.0",
-          "System.Console": "4.3.0",
-          "System.Runtime.InteropServices": "4.3.0",
-          "System.Runtime.InteropServices.RuntimeInformation": "4.3.0"
-        }
-      },
       "System.AppContext": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -393,11 +392,6 @@
           "System.Threading": "4.3.0",
           "System.Threading.Tasks": "4.3.0"
         }
-      },
-      "System.Collections.Immutable": {
-        "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "FXkLXiK0sVVewcso0imKQoOxjoPAj42R8HtjjbSjVPAzwDfzoyoznWxgA3c38LDbN9SJux1xXoXYAhz98j7r2g=="
       },
       "System.Collections.NonGeneric": {
         "type": "Transitive",
@@ -1157,14 +1151,11 @@
         "dependencies": {
           "Arbor.Processing": "0.6.0",
           "JetBrains.Annotations": "2021.1.0",
-          "NCrunch.Framework": "4.7.0.4",
           "NewtonSoft.Json": "13.0.1",
           "NuGet.Configuration": "5.9.1",
           "NuGet.Protocol": "5.9.1",
           "NuGet.Versioning": "5.9.1",
-          "Serilog": "2.10.0",
-          "Serilog.Sinks.Console": "3.1.1",
-          "System.Collections.Immutable": "5.0.0"
+          "Serilog": "2.10.0"
         }
       }
     }
