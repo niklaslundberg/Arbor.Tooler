@@ -170,7 +170,7 @@ namespace Arbor.Tooler
 
             var semanticVersions = new HashSet<SemanticVersion>();
 
-            foreach (var packageSource in sources.Where(s => s.IsHttp))
+            foreach (var packageSource in sources)
             {
                 if (!string.IsNullOrWhiteSpace(nuGetSource)
                     && !packageSource.Name.Equals(nuGetSource, StringComparison.OrdinalIgnoreCase))
@@ -178,30 +178,39 @@ namespace Arbor.Tooler
                     continue;
                 }
 
-                bool isV3Feed;
-
-                if (packageSource.ProtocolVersion == 3)
+                SourceRepository repository;
+                if (packageSource.IsHttp)
                 {
-                    isV3Feed = true;
+
+                    bool isV3Feed;
+
+                    if (packageSource.ProtocolVersion == 3)
+                    {
+                        isV3Feed = true;
+                    }
+                    else
+                    {
+                        using var request = new HttpRequestMessage(HttpMethod.Head, packageSource.SourceUri);
+                        var response = await httpClient.SendAsync(request, cancellationToken);
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            continue;
+                        }
+
+                        isV3Feed = response.Content.Headers.ContentType.MediaType.Contains(
+                            "json",
+                            StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    repository = isV3Feed
+                       ? Repository.Factory.GetCoreV3(packageSource.SourceUri.ToString())
+                       : Repository.Factory.GetCoreV2(packageSource);
                 }
                 else
                 {
-                    using var request = new HttpRequestMessage(HttpMethod.Head, packageSource.SourceUri);
-                    var response = await httpClient.SendAsync(request, cancellationToken);
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        continue;
-                    }
-
-                    isV3Feed = response.Content.Headers.ContentType.MediaType.Contains(
-                        "json",
-                        StringComparison.OrdinalIgnoreCase);
+                    repository = Repository.Factory.GetCoreV2(packageSource);
                 }
-
-                SourceRepository repository = isV3Feed
-                    ? Repository.Factory.GetCoreV3(packageSource.SourceUri.ToString())
-                    : Repository.Factory.GetCoreV2(packageSource);
 
                 FindPackageByIdResource resource =
                     await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);

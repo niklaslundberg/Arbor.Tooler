@@ -19,5 +19,17 @@ namespace Arbor.Tooler.Tests.Integration
 
             packageVersions.Should().NotBeEmpty();
         }
+
+        [Fact]
+        public async Task GetAllPackageVersionsDefaultConfig()
+        {
+            var nuGetPackageInstaller = new NuGetPackageInstaller();
+
+            string? configFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath(), "src", "Arbor.Tooler.Tests.Integration", "DefaultConfig", "nuget.config");
+
+            var packageVersions = await nuGetPackageInstaller.GetAllVersions(new NuGetPackageId("Newtonsoft.Json"), nugetConfig: configFile);
+
+            packageVersions.Should().NotBeEmpty();
+        }
     }
 }
