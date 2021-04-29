@@ -5,6 +5,8 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Unicode;
 using System.Threading;
 using System.Threading.Tasks;
 using Arbor.Processing;
@@ -181,7 +183,6 @@ namespace Arbor.Tooler
                 SourceRepository repository;
                 if (packageSource.IsHttp)
                 {
-
                     bool isV3Feed;
 
                     if (packageSource.ProtocolVersion == 3)
@@ -190,17 +191,7 @@ namespace Arbor.Tooler
                     }
                     else
                     {
-                        using var request = new HttpRequestMessage(HttpMethod.Head, packageSource.SourceUri);
-                        var response = await httpClient.SendAsync(request, cancellationToken);
-
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            continue;
-                        }
-
-                        isV3Feed = response.Content.Headers.ContentType.MediaType.Contains(
-                            "json",
-                            StringComparison.OrdinalIgnoreCase);
+                        isV3Feed = await IsV3Feed(packageSource, httpClient, HttpMethod.Head,  cancellationToken);
                     }
 
                     repository = isV3Feed
@@ -215,11 +206,11 @@ namespace Arbor.Tooler
                 FindPackageByIdResource resource =
                     await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
 
-                IEnumerable<NuGetVersion> versions = await resource.GetAllVersionsAsync(
+                IEnumerable<NuGetVersion> versions = (await resource.GetAllVersionsAsync(
                     packageId.PackageId,
                     cache,
                     nugetLogger,
-                    cancellationToken);
+                    cancellationToken)).ToArray();
 
                 semanticVersions.AddRange(
                     versions
@@ -231,6 +222,43 @@ namespace Arbor.Tooler
                     ? semanticVersions
                     : semanticVersions.Where(semanticVersion => !semanticVersion.IsPrerelease))
                 .ToImmutableArray();
+        }
+
+        private async Task<bool> IsV3Feed(PackageSource packageSource, HttpClient httpClient, HttpMethod httpMethod, CancellationToken cancellationToken)
+        {
+            bool isV3Feed;
+            using var request = new HttpRequestMessage(httpMethod, packageSource.SourceUri);
+
+            if (!string.IsNullOrWhiteSpace(packageSource.Credentials?.Username) &&
+                !string.IsNullOrWhiteSpace(packageSource.Credentials?.Password))
+            {
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(
+                    $"{packageSource.Credentials.Username}:{packageSource.Credentials.Password}");
+                string? encoded = Convert.ToBase64String(bytes);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", encoded);
+            }
+
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                isV3Feed = response.Content.Headers.ContentType.MediaType.Contains(
+                    "json",
+                    StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                if (httpMethod == HttpMethod.Head)
+                {
+                    isV3Feed = await IsV3Feed(packageSource, httpClient, HttpMethod.Get, cancellationToken);
+                }
+                else
+                {
+                    isV3Feed = false;
+                }
+            }
+
+            return isV3Feed;
         }
 
         private NuGet.Common.ILogger GetLogger(ILogger logger)
