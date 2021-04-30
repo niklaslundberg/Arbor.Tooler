@@ -6,26 +6,3 @@ updates:
     interval: daily
     time: "04:00"
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: Arbor.Aesculus
-    versions:
-    - 3.2.0
-  - dependency-name: NuGet.Versioning
-    versions:
-    - 5.9.0
-    - 5.9.1
-  - dependency-name: JetBrains.Annotations
-    versions:
-    - 2021.1.0
-  - dependency-name: NewtonSoft.Json
-    versions:
-    - 13.0.1
-  - dependency-name: Microsoft.NET.Test.Sdk
-    versions:
-    - 16.9.1
-  - dependency-name: Serilog.Sinks.Debug
-    versions:
-    - 2.0.0
-  - dependency-name: NCrunch.Framework
-    versions:
-    - 4.7.0.4
