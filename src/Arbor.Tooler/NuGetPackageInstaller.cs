@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.Unicode;
 using System.Threading;
 using System.Threading.Tasks;
 using Arbor.Processing;
@@ -164,7 +163,7 @@ namespace Arbor.Tooler
                 configFileName: null,
                 new XPlatMachineWideSetting());
 
-            var sources = SettingsUtility.GetEnabledSources(settings);
+            var sources = SettingsUtility.GetEnabledSources(settings).ToArray();
 
             var cache = new SourceCacheContext();
 
@@ -203,6 +202,11 @@ namespace Arbor.Tooler
                     repository = Repository.Factory.GetCoreV2(packageSource);
                 }
 
+                if (sources.Length == 1 && sources[0].Credentials is { })
+                {
+                    repository.PackageSource.Credentials ??= packageSource.Credentials;
+                }
+
                 FindPackageByIdResource resource =
                     await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
 
@@ -234,15 +238,18 @@ namespace Arbor.Tooler
             {
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(
                     $"{packageSource.Credentials.Username}:{packageSource.Credentials.Password}");
-                string? encoded = Convert.ToBase64String(bytes);
+                string encoded = Convert.ToBase64String(bytes);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", encoded);
             }
+
+            request.Headers.Accept.Clear();
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 
             using var response = await httpClient.SendAsync(request, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
-                isV3Feed = response?.Content?.Headers?.ContentType?.MediaType?.Contains(
+                isV3Feed = response.Content?.Headers?.ContentType?.MediaType?.Contains(
                     "json",
                     StringComparison.OrdinalIgnoreCase) ?? false;
             }
