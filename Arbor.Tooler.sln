@@ -3,27 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arbor.Tooler", "Arbor.Tooler\Arbor.Tooler.csproj", "{E419E435-59BE-47DC-BE2F-4A1A8800C6FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arbor.Tooler", "src\Arbor.Tooler\Arbor.Tooler.csproj", "{E419E435-59BE-47DC-BE2F-4A1A8800C6FC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arbor.Tooler.Tests.Integration", "Arbor.Tooler.Tests.Integration\Arbor.Tooler.Tests.Integration.csproj", "{3B0740E0-6D72-4704-A70E-CAA3109AB5A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arbor.Tooler.Tests.Integration", "tests\Arbor.Tooler.Tests.Integration\Arbor.Tooler.Tests.Integration.csproj", "{3B0740E0-6D72-4704-A70E-CAA3109AB5A7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{28110C33-EBAB-45C4-8938-D871DBA2E289}"
 	ProjectSection(SolutionItems) = preProject
-		..\.editorconfig = ..\.editorconfig
-		..\.gitattributes = ..\.gitattributes
-		..\.gitignore = ..\.gitignore
-		..\build\build.bat = ..\build\build.bat
-		..\.github\workflows\ci.yml = ..\.github\workflows\ci.yml
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		build\build.bat = build\build.bat
+		.github\workflows\ci.yml = .github\workflows\ci.yml
 		Directory.Build.props = Directory.Build.props
-		..\global.json = ..\global.json
-		..\LICENSE.txt = ..\LICENSE.txt
-		..\nuget.config = ..\nuget.config
-		..\README.md = ..\README.md
-		..\.github\workflows\sonar.yml = ..\.github\workflows\sonar.yml
-		..\version.json = ..\version.json
+		global.json = global.json
+		LICENSE.txt = LICENSE.txt
+		nuget.config = nuget.config
+		README.md = README.md
+		.github\workflows\sonar.yml = .github\workflows\sonar.yml
+		version.json = version.json
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arbor.Tooler.ConsoleClient", "Arbor.Tooler.ConsoleClient\Arbor.Tooler.ConsoleClient.csproj", "{3F796B8E-D8A7-40CF-A799-977A09526015}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arbor.Tooler.ConsoleClient", "src\Arbor.Tooler.ConsoleClient\Arbor.Tooler.ConsoleClient.csproj", "{3F796B8E-D8A7-40CF-A799-977A09526015}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
