@@ -742,7 +742,7 @@ namespace Arbor.Tooler
                 arguments.Add("detailed");
             }
 
-            using var tempDirectory = TempDirectory.CreateTempDirectory();
+            using var tempDirectory = TempDirectory.CreateTempDirectory(baseTempDirectory: nugetPackageSettings.TempDirectory);
             arguments.Add("-OutputDirectory");
             arguments.Add(tempDirectory.Directory!.FullName);
 

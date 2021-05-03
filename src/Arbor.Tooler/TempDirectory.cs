@@ -38,8 +38,8 @@ namespace Arbor.Tooler
             Directory = null;
         }
 
-        public static TempDirectory CreateTempDirectory(string? name = null) =>
-            new TempDirectory(new DirectoryInfo(Path.Combine(Path.GetTempPath(),
-                $"{name.WithDefault("Arbor.Tooler")}-{DateTime.UtcNow.Ticks}")).EnsureExists());
+        public static TempDirectory CreateTempDirectory(string? name = null, DirectoryInfo? baseTempDirectory = null) =>
+            new TempDirectory(new DirectoryInfo(Path.Combine(baseTempDirectory?.FullName ?? Path.GetTempPath(),
+                $"{name.WithDefault("AT")}-{DateTime.UtcNow.Ticks}")).EnsureExists());
     }
 }
