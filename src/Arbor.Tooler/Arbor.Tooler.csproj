@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Arbor.Processing" Version="0.6.0" />
-    <PackageReference Include="JetBrains.Annotations" Version="2021.1.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2021.2.0" />
     <PackageReference Include="NewtonSoft.Json" Version="13.0.1" />
     <PackageReference Include="NuGet.Configuration" Version="5.10.0" />
     <PackageReference Include="NuGet.Protocol" Version="5.10.0" />
