@@ -117,6 +117,123 @@
           "Serilog": "2.10.0"
         }
       }
+    },
+    "net6.0": {
+      "Serilog.Sinks.Console": {
+        "type": "Direct",
+        "requested": "[4.0.0, )",
+        "resolved": "4.0.0",
+        "contentHash": "yJQit9sTJ4xGLKgCujqDJsaGqBNJwGB/H898z+xYlMG06twy4//6LLnSrsmpduZxcHIG4im7cv+JmXLzXz2EkQ==",
+        "dependencies": {
+          "Serilog": "2.10.0"
+        }
+      },
+      "Arbor.Processing": {
+        "type": "Transitive",
+        "resolved": "0.6.0",
+        "contentHash": "KcuciNAfg/ArkDdcM1hHMeIprKwQjdHWV6zXBFAqmKDxGB9rdDHk9a1jHTVQ5r7y5gxAowCUGLgEcfheKItoig=="
+      },
+      "JetBrains.Annotations": {
+        "type": "Transitive",
+        "resolved": "2021.2.0",
+        "contentHash": "kKSyoVfndMriKHLfYGmr0uzQuI4jcc3TKGyww7buJFCYeHb/X0kodYBPL7n9454q7v6ASiRmDgpPGaDGerg/Hg=="
+      },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.1",
+        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+      },
+      "NuGet.Common": {
+        "type": "Transitive",
+        "resolved": "5.11.0",
+        "contentHash": "WCHexQBfSqBDRqP3PSDSUw7YM+PwuvMHGAkT/sXI5UHze4T41yLE+VB/km2Fe0z9y3m2mudcr2djFZezivjMJw==",
+        "dependencies": {
+          "NuGet.Frameworks": "5.11.0"
+        }
+      },
+      "NuGet.Configuration": {
+        "type": "Transitive",
+        "resolved": "5.11.0",
+        "contentHash": "NqsQe198CTHoo7NMrKQL8utd6n9yVb9CPgJmpyF6kpEsLFo/9r0wqGL3ln8Mtcz8yuJpOPWFQEoOlzDzu3LfUg==",
+        "dependencies": {
+          "NuGet.Common": "5.11.0",
+          "System.Security.Cryptography.ProtectedData": "4.4.0"
+        }
+      },
+      "NuGet.Frameworks": {
+        "type": "Transitive",
+        "resolved": "5.11.0",
+        "contentHash": "eaiXkUjC4NPcquGWzAGMXjuxvLwc6XGKMptSyOGQeT0X70BUZObuybJFZLA0OfTdueLd3US23NBPTBb6iF3V1Q=="
+      },
+      "NuGet.Packaging": {
+        "type": "Transitive",
+        "resolved": "5.11.0",
+        "contentHash": "knlpQuqTL8BEXUHTdZ9Wlz3pjck5nv0OYsCpSkaQAukl7fFcX4apAs8cwJgxHiEZjfWNG1npZOzpYdHG59v5xQ==",
+        "dependencies": {
+          "Newtonsoft.Json": "9.0.1",
+          "NuGet.Configuration": "5.11.0",
+          "NuGet.Versioning": "5.11.0",
+          "System.Security.Cryptography.Cng": "5.0.0",
+          "System.Security.Cryptography.Pkcs": "5.0.0"
+        }
+      },
+      "NuGet.Protocol": {
+        "type": "Transitive",
+        "resolved": "5.11.0",
+        "contentHash": "eS/sJLqMzPz6gonD1zaXIcpDME/1DuKqv0Hlag8RuJcboZJliA15qjfg7UvuQB8/ineOleaEvrTzMjpKE0FdbQ==",
+        "dependencies": {
+          "NuGet.Packaging": "5.11.0"
+        }
+      },
+      "NuGet.Versioning": {
+        "type": "Transitive",
+        "resolved": "5.11.0",
+        "contentHash": "mCv/GzvMk5iatWoZY41PoIShEbwVxq9CDCc1fV/uqPFKZ4DD/1JuKZ5AL/FJJRsTanvMR3EOXKYCLdQ7PFYn8Q=="
+      },
+      "Serilog": {
+        "type": "Transitive",
+        "resolved": "2.10.0",
+        "contentHash": "+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA=="
+      },
+      "System.Formats.Asn1": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "MTvUIktmemNB+El0Fgw9egyqT9AYSIk6DTJeoDSpc3GIHxHCMo8COqkWT1mptX5tZ1SlQ6HJZ0OsSvMth1c12w=="
+      },
+      "System.Security.Cryptography.Cng": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "jIMXsKn94T9JY7PvPq/tMfqa6GAaHpElRDpmG+SuL+D3+sTw2M8VhnibKnN8Tq+4JqbPJ/f+BwtLeDMEnzAvRg==",
+        "dependencies": {
+          "System.Formats.Asn1": "5.0.0"
+        }
+      },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "9TPLGjBCGKmNvG8pjwPeuYy0SMVmGZRwlTZvyPHDbYv/DRkoeumJdfumaaDNQzVGMEmbWtg07zUpSW9q70IlDQ==",
+        "dependencies": {
+          "System.Formats.Asn1": "5.0.0",
+          "System.Security.Cryptography.Cng": "5.0.0"
+        }
+      },
+      "System.Security.Cryptography.ProtectedData": {
+        "type": "Transitive",
+        "resolved": "4.4.0",
+        "contentHash": "cJV7ScGW7EhatRsjehfvvYVBvtiSMKgN8bOVI0bQhnF5bU7vnHVIsH49Kva7i7GWaWYvmEzkYVk1TC+gZYBEog=="
+      },
+      "arbor.tooler": {
+        "type": "Project",
+        "dependencies": {
+          "Arbor.Processing": "0.6.0",
+          "JetBrains.Annotations": "2021.2.0",
+          "NewtonSoft.Json": "13.0.1",
+          "NuGet.Configuration": "5.11.0",
+          "NuGet.Protocol": "5.11.0",
+          "NuGet.Versioning": "5.11.0",
+          "Serilog": "2.10.0"
+        }
+      }
     }
   }
 }
