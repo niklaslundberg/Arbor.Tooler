@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Arbor.Tooler\DirectoryHelper.cs" Link="DirectoryHelper.cs" />
-    <Compile Include="..\Arbor.Tooler\StringExtensions.cs" Link="StringExtensions.cs" />
-    <Compile Include="..\Arbor.Tooler\TempDirectory.cs" Link="TempDirectory.cs" />
+    <Compile Include="..\..\src\Arbor.Tooler\DirectoryHelper.cs" Link="DirectoryHelper.cs" />
+    <Compile Include="..\..\src\Arbor.Tooler\StringExtensions.cs" Link="StringExtensions.cs" />
+    <Compile Include="..\..\src\Arbor.Tooler\TempDirectory.cs" Link="TempDirectory.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arbor.Aesculus" Version="3.2.0" />
-    <PackageReference Include="Arbor.Aesculus.NCrunch" Version="3.2.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
-    <PackageReference Include="FluentAssertions" Version="*" />
+    <PackageReference Include="Arbor.Aesculus" Version="3.4.0" />
+    <PackageReference Include="Arbor.Aesculus.NCrunch" Version="3.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+    <PackageReference Include="FluentAssertions" Version="6.2.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.console" Version="2.4.1">
@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Arbor.Tooler\Arbor.Tooler.csproj" />
+    <ProjectReference Include="..\..\src\Arbor.Tooler\Arbor.Tooler.csproj" />
   </ItemGroup>
 
 </Project>

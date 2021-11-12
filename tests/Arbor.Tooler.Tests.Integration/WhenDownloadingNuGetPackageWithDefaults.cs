@@ -30,7 +30,7 @@ namespace Arbor.Tooler.Tests.Integration
                 new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory?.FullName);
 
             string nugetConfigFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath(),
-                "src",
+                "tests",
                 "Arbor.Tooler.Tests.Integration",
                 "testconfig",
                 "nuget.config");
