@@ -34,7 +34,7 @@
     <tags></tags>
   </metadata>
   <files>
-    <file src="bin\$configuration$\netcoreapp3.1\Arbor.Tooler.dll" target="lib\netcoreapp3.1" />
     <file src="bin\$configuration$\net5.0\Arbor.Tooler.dll" target="lib\net5.0" />
+    <file src="bin\$configuration$\net6.0\Arbor.Tooler.dll" target="lib\net6.0" />
   </files>
 </package>
