@@ -21,7 +21,7 @@
     <iconUrl>https://nuget.org/Content/Images/packageDefaultIcon-50x50.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <copyright>Copyright Niklas Lundberg 2018-2021</copyright>
+    <copyright>Copyright Niklas Lundberg 2018-2022</copyright>
     <dependencies>
       <dependency id="NuGet.Versioning" version="[5.0.0,7.0.0)" />
       <dependency id="NuGet.Protocol" version="[5.0.0,7.0.0)" />
@@ -34,7 +34,6 @@
     <tags></tags>
   </metadata>
   <files>
-    <file src="bin\$configuration$\net5.0\Arbor.Tooler.dll" target="lib\net5.0" />
     <file src="bin\$configuration$\net6.0\Arbor.Tooler.dll" target="lib\net6.0" />
   </files>
 </package>

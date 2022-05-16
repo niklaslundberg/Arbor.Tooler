@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <PackageId>Arbor.Tooler.GlobalTool</PackageId>
     <AssemblyName>dotnet-arbor-tooler</AssemblyName>
