@@ -8,7 +8,7 @@
     <PackageReference Include="Arbor.Processing" Version="0.6.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
     <PackageReference Include="NewtonSoft.Json" Version="13.0.1" />
-    <PackageReference Include="NuGet.Configuration" Version="6.3.1" />
+    <PackageReference Include="NuGet.Configuration" Version="6.4.0" />
     <PackageReference Include="NuGet.Protocol" Version="6.3.1" />
     <PackageReference Include="NuGet.Versioning" Version="6.3.1" />
     <PackageReference Include="Serilog" Version="2.12.0" />
