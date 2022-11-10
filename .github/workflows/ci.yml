@@ -17,8 +17,8 @@ jobs:
         dotnet-version: '7.0.x'
     - name: install-tools
       run: |
-        dotnet tool install --global Arbor.Tooler.GlobalTool
-        dotnet tool install --global Arbor.Build.Bootstrapper
+        dotnet tool install --global Arbor.Tooler.GlobalTool --version "*-*"
+        dotnet tool install --global Arbor.Build.Bootstrapper --version "*-*"
     - name: build
       env:
         Arbor.Build.NuGet.PackageUpload.Server.ApiKey: ${{ secrets.myget }}
