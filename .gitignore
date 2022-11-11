@@ -197,3 +197,4 @@ _patchedAssemblyInfos
 .vscode/tasks.json
 **/*.LocalTest.cs
 ncruncherror
+.cr/**/*
