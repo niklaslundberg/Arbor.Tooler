@@ -16,6 +16,7 @@ nCrunchTemp_*
 .vs
 .idea
 UpgradeLog*.htm
+.NCrunch*
 
 #################
 ## Eclipse

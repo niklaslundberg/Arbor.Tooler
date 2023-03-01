@@ -254,7 +254,7 @@ namespace Arbor.Tooler
                         return ImmutableArray<AvailableVersion>.Empty;
                     }
 
-                    json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 var sample = new
@@ -348,14 +348,12 @@ namespace Arbor.Tooler
 
             try
             {
-                string downloadDirectoryPath = nuGetDownloadSettings.DownloadDirectory.WithDefault(
+                var downloadDirectory = NuGetPackageInstaller.DownloadPathFromEnvironment() ?? new DirectoryInfo(nuGetDownloadSettings.DownloadDirectory.WithDefault(
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                         "Arbor.Tooler",
                         "tools",
                         "nuget",
-                        nuGetDownloadSettings.NugetExeVersion))!;
-
-                var downloadDirectory = new DirectoryInfo(downloadDirectoryPath);
+                        nuGetDownloadSettings.NugetExeVersion))!);
 
                 try
                 {

@@ -28,3 +28,16 @@
         Console.WriteLine(result.NuGetPackageId);
         Console.WriteLine(result.SemanticVersion);
         Console.WriteLine(result.PackageDirectory);
+
+# Command line global tool
+
+## Examples
+dotnet-arbor-tooler list -package-id=Arbor.Tooler -take=5 -config=C:\\nuget.config -source=nuget.org
+
+Outputs
+
+            0.19.0
+            0.18.0
+            0.17.0
+            0.16.0
+            0.15.0

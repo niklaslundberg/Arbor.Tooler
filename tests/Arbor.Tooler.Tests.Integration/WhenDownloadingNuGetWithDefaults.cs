@@ -28,7 +28,7 @@ namespace Arbor.Tooler.Tests.Integration
             await using var logWriter = new LogStringWriter(_output.WriteLine);
             Console.SetOut(logWriter);
 
-            using Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
+            await using Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
                 .MinimumLevel.Verbose()
                 .CreateLogger();
 

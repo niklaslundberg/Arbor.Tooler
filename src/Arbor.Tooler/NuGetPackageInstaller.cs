@@ -81,6 +81,7 @@ namespace Arbor.Tooler
             bool allowPreRelease = false,
             HttpClient? httpClient = default,
             ILogger? logger = default,
+            int maxRows = int.MaxValue,
             CancellationToken cancellationToken = default)
         {
             bool clientOwned = httpClient is null;
@@ -92,6 +93,7 @@ namespace Arbor.Tooler
                 allowPreRelease,
                 httpClient ?? new HttpClient(),
                 logger ?? Logger.None,
+                maxRows,
                 cancellationToken);
 
             if (clientOwned)
@@ -111,7 +113,8 @@ namespace Arbor.Tooler
             int? timeoutInSeconds = 30,
             string? nugetConfig = null,
             bool? adaptiveEnabled = null,
-            bool useCli = false)
+            bool useCli = false,
+            int maxRows = int.MaxValue)
         {
             if (!useCli)
             {
@@ -125,6 +128,7 @@ namespace Arbor.Tooler
                     allowPreRelease,
                     client,
                     Logger.None,
+                    maxRows,
                     tokenSource.Token);
             }
 
@@ -136,7 +140,8 @@ namespace Arbor.Tooler
                 prefix,
                 timeoutInSeconds,
                 nugetConfig,
-                adaptiveEnabled: adaptiveEnabled);
+                adaptiveEnabled: adaptiveEnabled,
+                maxRows: maxRows);
         }
 
         private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsFromApiInternalAsync(
@@ -146,6 +151,7 @@ namespace Arbor.Tooler
             bool allowPreRelease,
             HttpClient httpClient,
             ILogger logger,
+            int maxRows,
             CancellationToken cancellationToken)
         {
             ISettings? settings = null;
@@ -225,6 +231,8 @@ namespace Arbor.Tooler
             return (allowPreRelease
                     ? semanticVersions
                     : semanticVersions.Where(semanticVersion => !semanticVersion.IsPrerelease))
+                .OrderByDescending(version => version)
+                .Take(maxRows)
                 .ToImmutableArray();
         }
 
@@ -287,7 +295,8 @@ namespace Arbor.Tooler
             int? timeoutInSeconds = default,
             string? nugetConfig = null,
             bool firstAttempt = true,
-            bool? adaptiveEnabled = null)
+            bool? adaptiveEnabled = null,
+            int maxRows = int.MaxValue)
         {
             bool adaptiveEnabledValue = _nugetCliSettings.AdaptivePackagePrefixEnabled &&
                                         (!adaptiveEnabled.HasValue || adaptiveEnabled.Value);
@@ -335,7 +344,7 @@ namespace Arbor.Tooler
             var ignoredOutputStatements =
                 new List<string> {"Using credentials", "No packages found", "MSBuild auto-detection"};
 
-            var lines = new List<string>();
+            var lines = new List<string?>();
             ExitCode exitCode;
             bool isExplicitlyCancelledWithPackageIdMismatch = false;
 
@@ -353,9 +362,11 @@ namespace Arbor.Tooler
                         {
                             string[] packageLines = lines.Where(
                                 line =>
-                                    !ignoredOutputStatements.Any(
-                                        ignored =>
-                                            line.Contains(ignored, StringComparison.OrdinalIgnoreCase))).ToArray();
+                                    !string.IsNullOrWhiteSpace(line)
+                                    && !ignoredOutputStatements.Any(
+                                        ignored => line.Contains(ignored, StringComparison.OrdinalIgnoreCase)))
+                                .NotNull()
+                                .ToArray();
 
                             int packageLineCount = packageLines.Length;
 
@@ -514,6 +525,8 @@ namespace Arbor.Tooler
             return items
                 .Select(item => item.NuGetPackageVersion.SemanticVersion)
                 .NotNull()
+                .OrderByDescending(version => version)
+                .Take(maxRows)
                 .ToImmutableArray();
         }
 
@@ -640,7 +653,9 @@ namespace Arbor.Tooler
 
             _logger.Debug("Using nuget package settings {NuGetPackageSettings}", nugetPackageSettings);
 
-            DirectoryInfo fallbackDirectory = DirectoryHelper.FromPathSegments(
+            var downloadPathFromEnvironment = DownloadPathFromEnvironment();
+
+            DirectoryInfo fallbackDirectory = downloadPathFromEnvironment ??  DirectoryHelper.FromPathSegments(
                 DirectoryHelper.UserLocalAppDataDirectory(),
                 "Arbor.Tooler",
                 "packages");
@@ -665,7 +680,7 @@ namespace Arbor.Tooler
                 if (downloadedPackages.Length > 0)
                 {
                     var latest =
-                        downloadedPackages.OrderByDescending(version => version.SemanticVersion).First();
+                        downloadedPackages.MaxBy(version => version.SemanticVersion);
 
                     _logger.Debug(
                         "Found existing version {ExistingVersion}",
@@ -900,5 +915,10 @@ namespace Arbor.Tooler
                 nugetPackageFileSemanticVersion,
                 targetPackageDirectory);
         }
+
+        public static DirectoryInfo? DownloadPathFromEnvironment() =>
+            Environment.GetEnvironmentVariable("ArborTooler_NuGetInstallPath") is { } path && Directory.Exists(path)
+                ? new DirectoryInfo(path)
+                : null;
     }
 }

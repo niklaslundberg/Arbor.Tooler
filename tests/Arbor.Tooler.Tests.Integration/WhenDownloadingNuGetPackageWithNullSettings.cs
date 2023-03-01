@@ -16,7 +16,7 @@ namespace Arbor.Tooler.Tests.Integration
         [Fact]
         public async Task ItShouldHaveDownloadedTheLatestVersion()
         {
-            using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
+            await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
                 .MinimumLevel
                 .Verbose()
                 .CreateLogger();
@@ -24,11 +24,11 @@ namespace Arbor.Tooler.Tests.Integration
             var installer = new NuGetPackageInstaller(logger: testLogger);
 
             NuGetPackageInstallResult nuGetPackageInstallResult =
-                await installer.InstallPackageAsync("Arbor.Xdt").ConfigureAwait(false);
+                await installer.InstallPackageAsync("Arbor.Tooler").ConfigureAwait(false);
 
             Assert.NotNull(nuGetPackageInstallResult);
             Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
-            Assert.Equal("0.2.4", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+            Assert.Equal("0.19.0", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
 
             _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
             _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
