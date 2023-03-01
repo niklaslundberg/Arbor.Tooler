@@ -4,37 +4,37 @@
     "net7.0": {
       "Arbor.Aesculus": {
         "type": "Direct",
-        "requested": "[3.4.0, )",
-        "resolved": "3.4.0",
-        "contentHash": "lh8AQaQ/nv8iZSVIpkciOJWg79rqHA14TgzlbUDuS+ISYfUrmyKJYhML1AzZhy7g2CQwdLjNekTTzkHsWYDfYg=="
+        "requested": "[3.5.0, )",
+        "resolved": "3.5.0",
+        "contentHash": "cdTzbX7q5YhN76AcNp71dY4hIEg9SkRv0X3xJSKNhY9LfQ0qSUrbgqrlyCROCodKSAQbZzi2Cps9c96MiiSzFw=="
       },
       "Arbor.Aesculus.NCrunch": {
         "type": "Direct",
-        "requested": "[3.4.0, )",
-        "resolved": "3.4.0",
-        "contentHash": "CpDPaEMmk6/HwFVCq1JvQfYRD2v8G2lygNAcQilI91CXMjNY8yS1gprkCJtU6tB6+ofJiwmMa3OgcKjtar3tnQ==",
+        "requested": "[3.5.0, )",
+        "resolved": "3.5.0",
+        "contentHash": "Ufi/gpsEK2S8/IHgmRtQR3jWj/5YbUuhLtd4UAzBI1bo9Q+1YukvkPekvyAe1WUX88fBJmYkh9A48wJI7N/jIg==",
         "dependencies": {
-          "Arbor.Aesculus": "3.4.0",
+          "Arbor.Aesculus": "3.5.0",
           "NCrunch.Framework": "4.7.0"
         }
       },
       "FluentAssertions": {
         "type": "Direct",
-        "requested": "[6.8.0, )",
-        "resolved": "6.8.0",
-        "contentHash": "NfSlAG97wMxS48Ov+wQEhJITdn4bKrgtKrG4sCPrFBVKozpC57lQ2vzsPdxUOsPbfEgEQTMtvCDECxIlDBfgNA==",
+        "requested": "[6.10.0, )",
+        "resolved": "6.10.0",
+        "contentHash": "Da3YsiRDnOHKBfxutjnupL1rOX0K/jnG6crn5AgwukeqZ/yi+HNCOFshic01ke0ztZFWzpfQMXH8fO9aAbG0Gw==",
         "dependencies": {
           "System.Configuration.ConfigurationManager": "4.4.0"
         }
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
-        "requested": "[17.4.0, )",
-        "resolved": "17.4.0",
-        "contentHash": "VtNZQ83ntG2aEUjy1gq6B4HNdn96se6FmdY/03At8WiqDReGrApm6OB2fNiSHz9D6IIEtWtNZ2FSH0RJDVXl/w==",
+        "requested": "[17.5.0, )",
+        "resolved": "17.5.0",
+        "contentHash": "IJ4eSPcsRbwbAZehh1M9KgejSy0u3d0wAdkJytfCh67zOaCl5U3ltruUEe15MqirdRqGmm/ngbjeaVeGapSZxg==",
         "dependencies": {
-          "Microsoft.CodeCoverage": "17.4.0",
-          "Microsoft.TestPlatform.TestHost": "17.4.0"
+          "Microsoft.CodeCoverage": "17.5.0",
+          "Microsoft.TestPlatform.TestHost": "17.5.0"
         }
       },
       "Serilog.Sinks.Debug": {
@@ -81,8 +81,8 @@
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
-        "resolved": "17.4.0",
-        "contentHash": "2oZbSVTC2nAvQ2DnbXLlXS+c25ZyZdWeNd+znWwAxwGaPh9dwQ5NBsYyqQB7sKmJKIUdkKGmN3rzFzjVC81Dtg=="
+        "resolved": "17.5.0",
+        "contentHash": "6FQo0O6LKDqbCiIgVQhJAf810HSjFlOj7FunWaeOGDKxy8DAbpHzPk4SfBTXz9ytaaceuIIeR6hZgplt09m+ig=="
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
@@ -96,8 +96,8 @@
       },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
-        "resolved": "17.4.0",
-        "contentHash": "oWe7A0wrZhxagTOcaxJ9r0NXTbgkiBQQuCpCXxnP06NsGV/qOoaY2oaangAJbOUrwEx0eka1do400NwNCjfytw==",
+        "resolved": "17.5.0",
+        "contentHash": "QwiBJcC/oEA1kojOaB0uPWOIo4i6BYuTBBYJVhUvmXkyYqZ2Ut/VZfgi+enf8LF8J4sjO98oRRFt39MiRorcIw==",
         "dependencies": {
           "NuGet.Frameworks": "5.11.0",
           "System.Reflection.Metadata": "1.6.0"
@@ -105,10 +105,10 @@
       },
       "Microsoft.TestPlatform.TestHost": {
         "type": "Transitive",
-        "resolved": "17.4.0",
-        "contentHash": "sUx48fu9wgQF1JxzXeSVtzb7KoKpJrdtIzsFamxET3ZYOKXj+Ej13HWZ0U2nuMVZtZVHBmE+KS3Vv5cIdTlycQ==",
+        "resolved": "17.5.0",
+        "contentHash": "X86aikwp9d4SDcBChwzQYZihTPGEtMdDk+9t64emAl7N0Tq+OmlLAoW+Rs+2FB2k6QdUicSlT4QLO2xABRokaw==",
         "dependencies": {
-          "Microsoft.TestPlatform.ObjectModel": "17.4.0",
+          "Microsoft.TestPlatform.ObjectModel": "17.5.0",
           "Newtonsoft.Json": "13.0.1"
         }
       },
@@ -184,55 +184,55 @@
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
-        "resolved": "13.0.1",
-        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+        "resolved": "13.0.2",
+        "contentHash": "R2pZ3B0UjeyHShm9vG+Tu0EBb2lC8b0dFzV9gVn50ofHXh9Smjk6kTn7A/FdAsC8B5cKib1OnGYOXxRBz5XQDg=="
       },
       "NuGet.Common": {
         "type": "Transitive",
-        "resolved": "6.4.0",
-        "contentHash": "srECugLk+LB1bXelDCDhHoi6do/EYTXzuntKhjHraS4roVB3NfWohEdCSiAPdpSV9M40Q6jo6MV2Srml9e+jHQ==",
+        "resolved": "6.5.0",
+        "contentHash": "u5V3R9FzGHB57bcKhCjKdaaB3m+zzOIp7pXvcCVYa2fnXYUQVEoY7XE+nLKJwJqN6PXzQP9/ztUUSFl9uslNJw==",
         "dependencies": {
-          "NuGet.Frameworks": "6.4.0"
+          "NuGet.Frameworks": "6.5.0"
         }
       },
       "NuGet.Configuration": {
         "type": "Transitive",
-        "resolved": "6.4.0",
-        "contentHash": "vPjauG9AoacEjiZWGIs+d11FCRVmseqAw78FIApfLvZrYMEbbwc9vc0LdC3PpoW5FxYkktyZSiiXVKXGLu+gXw==",
+        "resolved": "6.5.0",
+        "contentHash": "rodANSrSBCV84Go7JlwJjaNtAjfYwZlBdwFWIoiSvtU8HQ/cnXi3r2AL8OxLdkLpS+/FmmU/vftCcKucmhkDaA==",
         "dependencies": {
-          "NuGet.Common": "6.4.0",
+          "NuGet.Common": "6.5.0",
           "System.Security.Cryptography.ProtectedData": "4.4.0"
         }
       },
       "NuGet.Frameworks": {
         "type": "Transitive",
-        "resolved": "6.4.0",
-        "contentHash": "qcufbjJIDtyY/Hah7JJfcRVpRYM3scgPqYBnukjO9kfADCFGr2azvVBozuwzljA6w/cR3w8bXLq6vW5xGrsmHw=="
+        "resolved": "6.5.0",
+        "contentHash": "QWINE2x3MbTODsWT1Gh71GaGb5icBz4chS8VYvTgsBnsi8esgN6wtHhydd7fvToWECYGq7T4cgBBDiKD/363fg=="
       },
       "NuGet.Packaging": {
         "type": "Transitive",
-        "resolved": "6.4.0",
-        "contentHash": "aR10aYqcUMGC2mwMGH5rls/MGaz3EVH8DKTTHQ/EC91hXNtrCTTAQonaRR+v1EItcoxtQeZ/WQOorv4z270Tgg==",
+        "resolved": "6.5.0",
+        "contentHash": "n02Hqnw0Bz/936pmK/vxT2u3QtC1bgmw0Opm8N4sqdwWs41kHiKeJkudmBYRUZMDzsJIMn6Ub9JopWk7A7MjYQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1",
-          "NuGet.Configuration": "6.4.0",
-          "NuGet.Versioning": "6.4.0",
+          "NuGet.Configuration": "6.5.0",
+          "NuGet.Versioning": "6.5.0",
           "System.Security.Cryptography.Cng": "5.0.0",
           "System.Security.Cryptography.Pkcs": "5.0.0"
         }
       },
       "NuGet.Protocol": {
         "type": "Transitive",
-        "resolved": "6.4.0",
-        "contentHash": "KIPjsWP0P3EMsDsXaa6YBCTvYKur/zI0luS1kO5G37ci8mHs2kJFsuG5qaMhGvgyHASu54sxlic1n1oza2Pcbw==",
+        "resolved": "6.5.0",
+        "contentHash": "CXDvu2mZga3qDAGvXTt6QTdpPZ5qNjpjZK2g7lU0MjamE3Eyi3dkN/GSr5QIyupcuCeOM8XHiNHRag6IF63Aqw==",
         "dependencies": {
-          "NuGet.Packaging": "6.4.0"
+          "NuGet.Packaging": "6.5.0"
         }
       },
       "NuGet.Versioning": {
         "type": "Transitive",
-        "resolved": "6.4.0",
-        "contentHash": "YE8p3TpX4jIw+Gb24maE8YRDoqWA4imLmCbdOj5IvslLrZJXQ8akeFOGOplxICNVevON1g1SFYT2+cq4yy0nQQ=="
+        "resolved": "6.5.0",
+        "contentHash": "a2j4bDoSBVagDZ+Q61kAmxs/kY8q16cgNDdZuo867j5ip2F4yInjy1v8Ec9LslbP7QBtMzGDWw7rfBlFt6qofg=="
       },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
@@ -1151,10 +1151,10 @@
         "dependencies": {
           "Arbor.Processing": "[0.6.0, )",
           "JetBrains.Annotations": "[2022.3.1, )",
-          "NewtonSoft.Json": "[13.0.1, )",
-          "NuGet.Configuration": "[6.4.0, )",
-          "NuGet.Protocol": "[6.4.0, )",
-          "NuGet.Versioning": "[6.4.0, )",
+          "NewtonSoft.Json": "[13.0.2, )",
+          "NuGet.Configuration": "[6.5.0, )",
+          "NuGet.Protocol": "[6.5.0, )",
+          "NuGet.Versioning": "[6.5.0, )",
           "Serilog": "[2.12.0, )"
         }
       }

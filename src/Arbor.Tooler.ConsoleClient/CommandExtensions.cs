@@ -6,6 +6,11 @@ namespace Arbor.Tooler.ConsoleClient
 {
     internal static class CommandExtensions
     {
+        public const string List = "list";
+        public const string PackageId = "-package-id";
+        public const string Source = "-source";
+        public const string Config = "-config";
+        public const string Take = "-take";
         public const string DownloadDirectory = "-outputdirectory";
         public const string ExeVersion = "-exe-version";
         public const string Force = "--force";

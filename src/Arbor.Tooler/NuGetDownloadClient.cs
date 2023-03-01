@@ -254,7 +254,7 @@ namespace Arbor.Tooler
                         return ImmutableArray<AvailableVersion>.Empty;
                     }
 
-                    json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 var sample = new

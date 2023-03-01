@@ -32,7 +32,19 @@ namespace Arbor.Tooler.ConsoleClient
         private void ShowUsage()
         {
             _logger.Information(
-                "Example usage: {Command} {Argument}={ExampleArgument} {VersionArgument}={ExampleVersionValue}",
+                "Example usage to list package versions: {Executable} {Command} {Argument}={ExampleArgument} {Source}={ExampleSource} {Config}={ExampleConfig} {Take}={TakeExample}",
+                "dotnet-arbor-tooler",
+                CommandExtensions.List,
+                CommandExtensions.PackageId,
+                "Arbor.Tooler",
+                CommandExtensions.Source,
+                "nuget.org",
+                CommandExtensions.Config,
+                "C:\\nuget.config",
+                CommandExtensions.Take,
+                "5");
+            _logger.Information(
+                "Example usage to download nuget.exe: {Command} {Argument}={ExampleArgument} {VersionArgument}={ExampleVersionValue}",
                 "dotnet-arbor-tooler",
                 CommandExtensions.DownloadDirectory,
                 @"C:\Tools\NuGet",
@@ -64,6 +76,23 @@ namespace Arbor.Tooler.ConsoleClient
                 if (_args.Length == 0)
                 {
                     ShowUsage();
+                }
+                else if (_args.Any(arg => arg.Equals(CommandExtensions.List, StringComparison.OrdinalIgnoreCase))
+                         && _args.GetCommandLineValue(CommandExtensions.PackageId) is { } packageId)
+                {
+                    var nuGetPackageInstaller = new NuGetPackageInstaller();
+
+                    int maxRows = int.TryParse(_args.GetCommandLineValue(CommandExtensions.Take), out int take) && take > 0 ? take : int.MaxValue;
+
+                    var source = _args.GetCommandLineValue(CommandExtensions.Source);
+                    var config = _args.GetCommandLineValue(CommandExtensions.Config);
+
+                    var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), maxRows: maxRows, nuGetSource: source, nugetConfig: config);
+
+                    foreach (var package in packages)
+                    {
+                        Console.WriteLine(package.ToNormalizedString());
+                    }
                 }
                 else
                 {
