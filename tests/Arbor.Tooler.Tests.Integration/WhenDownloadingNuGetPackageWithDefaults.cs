@@ -25,7 +25,7 @@ namespace Arbor.Tooler.Tests.Integration
                 .Verbose()
                 .CreateLogger();
 
-            using Logger logger = testLogger;
+            await using Logger logger = testLogger;
             var nugetDownloadSettings =
                 new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory?.FullName);
 

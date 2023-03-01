@@ -348,14 +348,12 @@ namespace Arbor.Tooler
 
             try
             {
-                string downloadDirectoryPath = nuGetDownloadSettings.DownloadDirectory.WithDefault(
+                var downloadDirectory = NuGetPackageInstaller.DownloadPathFromEnvironment() ?? new DirectoryInfo(nuGetDownloadSettings.DownloadDirectory.WithDefault(
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                         "Arbor.Tooler",
                         "tools",
                         "nuget",
-                        nuGetDownloadSettings.NugetExeVersion))!;
-
-                var downloadDirectory = new DirectoryInfo(downloadDirectoryPath);
+                        nuGetDownloadSettings.NugetExeVersion))!);
 
                 try
                 {

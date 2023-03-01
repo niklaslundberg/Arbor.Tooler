@@ -653,7 +653,9 @@ namespace Arbor.Tooler
 
             _logger.Debug("Using nuget package settings {NuGetPackageSettings}", nugetPackageSettings);
 
-            DirectoryInfo fallbackDirectory = DirectoryHelper.FromPathSegments(
+            var downloadPathFromEnvironment = DownloadPathFromEnvironment();
+
+            DirectoryInfo fallbackDirectory = downloadPathFromEnvironment ??  DirectoryHelper.FromPathSegments(
                 DirectoryHelper.UserLocalAppDataDirectory(),
                 "Arbor.Tooler",
                 "packages");
@@ -913,5 +915,10 @@ namespace Arbor.Tooler
                 nugetPackageFileSemanticVersion,
                 targetPackageDirectory);
         }
+
+        public static DirectoryInfo? DownloadPathFromEnvironment() =>
+            Environment.GetEnvironmentVariable("ArborTooler_NuGetInstallPath") is { } path && Directory.Exists(path)
+                ? new DirectoryInfo(path)
+                : null;
     }
 }
