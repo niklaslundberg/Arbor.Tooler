@@ -8,7 +8,7 @@ using Serilog.Events;
 
 namespace Arbor.Tooler.ConsoleClient
 {
-    internal sealed class ToolerConsole : IDisposable
+    public sealed class ToolerConsole : IDisposable
     {
         private readonly string[] _args;
         private ILogger _logger;
@@ -93,6 +93,8 @@ namespace Arbor.Tooler.ConsoleClient
                     {
                         Console.WriteLine(package.ToNormalizedString());
                     }
+
+                    exitCode = 0;
                 }
                 else
                 {

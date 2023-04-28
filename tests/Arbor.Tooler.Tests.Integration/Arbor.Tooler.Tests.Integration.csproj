@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Arbor.Tooler.ConsoleClient\Arbor.Tooler.ConsoleClient.csproj" />
     <ProjectReference Include="..\..\src\Arbor.Tooler\Arbor.Tooler.csproj" />
   </ItemGroup>
 
