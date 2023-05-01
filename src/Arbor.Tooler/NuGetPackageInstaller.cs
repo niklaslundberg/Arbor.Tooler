@@ -428,12 +428,11 @@ namespace Arbor.Tooler
             }
 
             var included = lines
-                .Where(
-                    line => line != null && !ignoredOutputStatements
-                        .Any(
-                            ignored =>
-                                line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
-                .ToList();
+                          .Where(line => line != null &&
+                                         !ignoredOutputStatements.Any(ignored =>
+                                             line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
+                          .NotNull()
+                          .ToList();
 
             var items = included.Select(
                     package =>
