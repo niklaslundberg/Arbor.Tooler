@@ -46,6 +46,18 @@
           "Serilog": "2.10.0"
         }
       },
+      "Serilog.Sinks.XUnit": {
+        "type": "Direct",
+        "requested": "[3.0.5, )",
+        "resolved": "3.0.5",
+        "contentHash": "+Lp5sBCcdtb7b2Kpjr6rtgg9ZWFCM8Tlp2dlFkfvBfFQd3Zw81HQdP5FKXggLAwbE8tX/i5odAIhjly9C5jUrw==",
+        "dependencies": {
+          "Serilog": "2.12.0",
+          "xunit.abstractions": "2.0.3",
+          "xunit.extensibility.core": "2.4.2",
+          "xunit.extensibility.execution": "2.4.2"
+        }
+      },
       "xunit": {
         "type": "Direct",
         "requested": "[2.4.2, )",

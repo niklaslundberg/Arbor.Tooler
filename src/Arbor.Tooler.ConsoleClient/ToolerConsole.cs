@@ -11,27 +11,28 @@ namespace Arbor.Tooler.ConsoleClient
     public sealed class ToolerConsole : IDisposable
     {
         private readonly string[] _args;
-        private ILogger _logger;
+
+        public ILogger Logger { get; private set; }
 
         private ToolerConsole(string[] args, ILogger logger)
         {
-            _logger = logger;
+            Logger = logger;
             _args = args ?? Array.Empty<string>();
         }
 
         public void Dispose()
         {
-            if (_logger is IDisposable disposable)
+            if (Logger is IDisposable disposable)
             {
                 disposable.Dispose();
             }
 
-            _logger = null!;
+            Logger = null!;
         }
 
         private void ShowUsage()
         {
-            _logger.Information(
+            Logger.Information(
                 "Example usage to list package versions: {Executable} {Command} {Argument}={ExampleArgument} {Source}={ExampleSource} {Config}={ExampleConfig} {Take}={TakeExample}",
                 "dotnet-arbor-tooler",
                 CommandExtensions.List,
@@ -43,24 +44,29 @@ namespace Arbor.Tooler.ConsoleClient
                 "C:\\nuget.config",
                 CommandExtensions.Take,
                 "5");
-            _logger.Information(
+            Logger.Information(
                 "Example usage to download nuget.exe: {Command} {Argument}={ExampleArgument} {VersionArgument}={ExampleVersionValue}",
                 "dotnet-arbor-tooler",
                 CommandExtensions.DownloadDirectory,
                 @"C:\Tools\NuGet",
                 CommandExtensions.ExeVersion,
                 "5.4.0");
-            _logger.Information(
+            Logger.Information(
                 "Example usage, default location: {Command} {Argument}={DefaultArgument}",
                 "dotnet-arbor-tooler",
                 CommandExtensions.DownloadDirectory,
                 "default");
         }
 
-        public static ToolerConsole Create(string[] args)
+        public static ToolerConsole Create(string[] args, ILogger logger)
+        {
+            return new ToolerConsole(args, logger);
+        }
+
+        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Error)
         {
             Logger logger = new LoggerConfiguration()
-                .WriteTo.Console(standardErrorFromLevel: LogEventLevel.Error)
+                .WriteTo.Console(standardErrorFromLevel: minLevel)
                 .MinimumLevel.Debug()
                 .CreateLogger();
 
@@ -117,22 +123,26 @@ namespace Arbor.Tooler.ConsoleClient
 
                         NuGetDownloadResult nuGetDownloadResult = await new NuGetDownloadClient().DownloadNuGetAsync(
                             new NuGetDownloadSettings(downloadDirectory: downloadDirectory, nugetExeVersion: exeVersion, force: force),
-                            _logger).ConfigureAwait(false);
+                            Logger).ConfigureAwait(false);
 
                         if (nuGetDownloadResult.Succeeded)
                         {
                             exitCode = 0;
+                        }
+                        else
+                        {
+                            Logger.Error("Could not download NuGet client, {Result}", nuGetDownloadResult.Result);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Could not download NuGet");
+                Logger.Error(ex, "Could not download NuGet");
             }
             finally
             {
-                _logger.Verbose("Exit code is {ExitCode}", exitCode);
+                Logger.Verbose("Exit code is {ExitCode}", exitCode);
             }
 
             if (Debugger.IsAttached)
