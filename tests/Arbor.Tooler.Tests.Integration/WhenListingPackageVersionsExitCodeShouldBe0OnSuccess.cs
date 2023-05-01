@@ -23,14 +23,14 @@ public sealed class WhenListingPackageVersionsExitCodeShouldBe0OnSuccess : IDisp
     [Fact]
     public async Task Run()
     {
-        string nugetConfigFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath(),
+        string nugetConfigFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!,
             "tests",
             "Arbor.Tooler.Tests.Integration",
             "DefaultConfig",
             "nuget.config");
 
         string[] args = { "list", "-package-id=Arbor.Tooler", $"-configFile={nugetConfigFile}" };
-        using var toolerConsole = ToolerConsole.Create(args, _logger);
+        using var toolerConsole = ToolerConsole.Create(args, _logger, message => _logger.Information("{Message}", message));
         int exitCode = await toolerConsole.RunAsync();
 
         exitCode.Should().Be(0);

@@ -10,12 +10,14 @@ namespace Arbor.Tooler.ConsoleClient
 {
     public sealed class ToolerConsole : IDisposable
     {
+        private readonly Action<string> _outAction;
         private readonly string[] _args;
 
         public ILogger Logger { get; private set; }
 
-        private ToolerConsole(string[] args, ILogger logger)
+        private ToolerConsole(string[]? args, ILogger logger, Action<string>? outAction)
         {
+            _outAction = outAction ?? Console.WriteLine;
             Logger = logger;
             _args = args ?? Array.Empty<string>();
         }
@@ -58,19 +60,17 @@ namespace Arbor.Tooler.ConsoleClient
                 "default");
         }
 
-        public static ToolerConsole Create(string[] args, ILogger logger)
-        {
-            return new ToolerConsole(args, logger);
-        }
+        public static ToolerConsole Create(string[] args, ILogger logger, Action<string> outAction) =>
+            new(args, logger, outAction);
 
-        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Error)
+        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Error, Action<string>? outAction = null)
         {
             Logger logger = new LoggerConfiguration()
                 .WriteTo.Console(standardErrorFromLevel: minLevel)
                 .MinimumLevel.Debug()
                 .CreateLogger();
 
-            return new ToolerConsole(args, logger);
+            return new ToolerConsole(args, logger, outAction);
         }
 
         public async Task<int> RunAsync()
@@ -90,14 +90,14 @@ namespace Arbor.Tooler.ConsoleClient
 
                     int maxRows = int.TryParse(_args.GetCommandLineValue(CommandExtensions.Take), out int take) && take > 0 ? take : int.MaxValue;
 
-                    var source = _args.GetCommandLineValue(CommandExtensions.Source);
-                    var config = _args.GetCommandLineValue(CommandExtensions.Config);
+                    string? source = _args.GetCommandLineValue(CommandExtensions.Source);
+                    string? config = _args.GetCommandLineValue(CommandExtensions.Config);
 
                     var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), maxRows: maxRows, nuGetSource: source, nugetConfig: config);
 
                     foreach (var package in packages)
                     {
-                        Console.WriteLine(package.ToNormalizedString());
+                        _outAction(package.ToNormalizedString());
                     }
 
                     exitCode = 0;

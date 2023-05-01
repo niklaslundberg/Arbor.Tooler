@@ -13,7 +13,7 @@ namespace Arbor.Tooler.Tests.Integration
         {
             var nuGetPackageInstaller = new NuGetPackageInstaller();
 
-            Directory.SetCurrentDirectory(VcsTestPathHelper.TryFindVcsRootPath());
+            Directory.SetCurrentDirectory(VcsTestPathHelper.TryFindVcsRootPath()!);
 
             var packageVersions = await nuGetPackageInstaller.GetAllVersions(new NuGetPackageId("Newtonsoft.Json"));
 
@@ -25,7 +25,7 @@ namespace Arbor.Tooler.Tests.Integration
         {
             var nuGetPackageInstaller = new NuGetPackageInstaller();
 
-            string? configFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath(), "tests", "Arbor.Tooler.Tests.Integration", "DefaultConfig", "nuget.config");
+            string? configFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!, "tests", "Arbor.Tooler.Tests.Integration", "DefaultConfig", "nuget.config");
 
             var packageVersions = await nuGetPackageInstaller.GetAllVersions(new NuGetPackageId("Newtonsoft.Json"), nugetConfig: configFile);
 
