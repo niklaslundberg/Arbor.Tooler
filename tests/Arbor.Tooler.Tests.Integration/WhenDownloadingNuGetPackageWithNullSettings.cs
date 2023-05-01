@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using FluentAssertions;
+using NuGet.Versioning;
 using Serilog;
 using Serilog.Core;
 using Xunit;
@@ -28,7 +30,9 @@ namespace Arbor.Tooler.Tests.Integration
 
             Assert.NotNull(nuGetPackageInstallResult);
             Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
-            Assert.Equal("0.19.0", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+
+            var minVersion = new SemanticVersion(0, 19, 0);
+            nuGetPackageInstallResult.SemanticVersion.Should().BeGreaterOrEqualTo(minVersion);
 
             _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
             _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);

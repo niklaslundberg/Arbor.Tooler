@@ -9,7 +9,6 @@ using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Arbor.Processing;
-using JetBrains.Annotations;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Packaging;
@@ -45,7 +44,6 @@ namespace Arbor.Tooler
             _logger = logger ?? Logger.None;
         }
 
-        [ItemCanBeNull]
         public async Task<SemanticVersion?> GetLatestVersionAsync(
             NuGetPackageId packageId,
             string nugetExePath,
@@ -162,7 +160,7 @@ namespace Arbor.Tooler
                 settings = Settings.LoadSpecificSettings(fileInfo.Directory!.FullName, fileInfo.Name);
             }
 
-            string? currentDirectory = Directory.GetCurrentDirectory();
+            string currentDirectory = Directory.GetCurrentDirectory();
 
             settings ??= Settings.LoadDefaultSettings(
                 currentDirectory,
@@ -257,7 +255,7 @@ namespace Arbor.Tooler
 
             if (response.IsSuccessStatusCode)
             {
-                isV3Feed = response.Content?.Headers?.ContentType?.MediaType?.Contains(
+                isV3Feed = response.Content.Headers.ContentType?.MediaType?.Contains(
                     "json",
                     StringComparison.OrdinalIgnoreCase) ?? false;
             }
@@ -276,15 +274,8 @@ namespace Arbor.Tooler
             return isV3Feed;
         }
 
-        private NuGet.Common.ILogger GetLogger(ILogger logger)
-        {
-            if (logger == Logger.None)
-            {
-                return NullLogger.Instance;
-            }
-
-            return new SerilogNuGetAdapter(logger);
-        }
+        private static NuGet.Common.ILogger GetLogger(ILogger logger) =>
+            logger == Logger.None ? NullLogger.Instance : new SerilogNuGetAdapter(logger);
 
         private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsInternalAsync(
             NuGetPackageId packageId,
@@ -428,12 +419,11 @@ namespace Arbor.Tooler
             }
 
             var included = lines
-                .Where(
-                    line => line != null && !ignoredOutputStatements
-                        .Any(
-                            ignored =>
-                                line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
-                .ToList();
+                          .Where(line => line != null
+                                         && !ignoredOutputStatements.Any(ignored =>
+                                             line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
+                          .NotNull()
+                          .ToList();
 
             var items = included.Select(
                     package =>

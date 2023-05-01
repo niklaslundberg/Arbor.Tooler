@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="FluentAssertions" Version="6.10.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
+    <PackageReference Include="Serilog.Sinks.XUnit" Version="3.0.5" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.console" Version="2.4.2">
       <PrivateAssets>all</PrivateAssets>
@@ -28,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Arbor.Tooler.ConsoleClient\Arbor.Tooler.ConsoleClient.csproj" />
     <ProjectReference Include="..\..\src\Arbor.Tooler\Arbor.Tooler.csproj" />
   </ItemGroup>
 
