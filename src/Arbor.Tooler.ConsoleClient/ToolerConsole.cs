@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Serilog;
@@ -10,14 +9,13 @@ namespace Arbor.Tooler.ConsoleClient
 {
     public sealed class ToolerConsole : IDisposable
     {
-        private readonly Action<string> _outAction;
+        public const string OutputTemplate = "{Message}{NewLine}";
         private readonly string[] _args;
 
         public ILogger Logger { get; private set; }
 
-        private ToolerConsole(string[]? args, ILogger logger, Action<string>? outAction)
+        private ToolerConsole(string[]? args, ILogger logger)
         {
-            _outAction = outAction ?? Console.WriteLine;
             Logger = logger;
             _args = args ?? Array.Empty<string>();
         }
@@ -60,17 +58,17 @@ namespace Arbor.Tooler.ConsoleClient
                 "default");
         }
 
-        public static ToolerConsole Create(string[] args, ILogger logger, Action<string> outAction) =>
-            new(args, logger, outAction);
+        public static ToolerConsole Create(string[] args, ILogger logger) =>
+            new(args, logger);
 
-        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Error, Action<string>? outAction = null)
+        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Information)
         {
             Logger logger = new LoggerConfiguration()
-                .WriteTo.Console(standardErrorFromLevel: minLevel)
+                .WriteTo.Console(standardErrorFromLevel: minLevel, outputTemplate: OutputTemplate)
                 .MinimumLevel.Debug()
                 .CreateLogger();
 
-            return new ToolerConsole(args, logger, outAction);
+            return new ToolerConsole(args, logger);
         }
 
         public async Task<int> RunAsync()
@@ -97,7 +95,7 @@ namespace Arbor.Tooler.ConsoleClient
 
                     foreach (var package in packages)
                     {
-                        _outAction(package.ToNormalizedString());
+                        Logger.Information(package.ToNormalizedString());
                     }
 
                     exitCode = 0;
@@ -143,11 +141,6 @@ namespace Arbor.Tooler.ConsoleClient
             finally
             {
                 Logger.Verbose("Exit code is {ExitCode}", exitCode);
-            }
-
-            if (Debugger.IsAttached)
-            {
-                Debugger.Break();
             }
 
             return exitCode;
