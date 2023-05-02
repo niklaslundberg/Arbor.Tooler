@@ -16,7 +16,7 @@ public sealed class WhenListingPackageVersionsExitCodeShouldBe0OnSuccess : IDisp
     private readonly Logger _logger;
 
     public WhenListingPackageVersionsExitCodeShouldBe0OnSuccess(ITestOutputHelper testOutputHelper) => _logger = new LoggerConfiguration()
-       .WriteTo.TestOutput(testOutputHelper)
+       .WriteTo.TestOutput(testOutputHelper, outputTemplate: ToolerConsole.OutputTemplate)
        .MinimumLevel.Debug()
        .CreateLogger();
 
@@ -30,7 +30,7 @@ public sealed class WhenListingPackageVersionsExitCodeShouldBe0OnSuccess : IDisp
             "nuget.config");
 
         string[] args = { "list", "-package-id=Arbor.Tooler", $"-configFile={nugetConfigFile}" };
-        using var toolerConsole = ToolerConsole.Create(args, _logger, message => _logger.Information("{Message}", message));
+        using var toolerConsole = ToolerConsole.Create(args, _logger);
         int exitCode = await toolerConsole.RunAsync();
 
         exitCode.Should().Be(0);
