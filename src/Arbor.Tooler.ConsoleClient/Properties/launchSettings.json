@@ -2,7 +2,7 @@
   "profiles": {
     "Arbor.Tooler.ConsoleClient": {
       "commandName": "Project",
-      "commandLineArgs": "list -package-id=Arbor.Tooler -source=nuget.org"
+      "commandLineArgs": "list -package-id=Arbor.Tooler -source=nuget.org -take=2"
     }
   }
 }

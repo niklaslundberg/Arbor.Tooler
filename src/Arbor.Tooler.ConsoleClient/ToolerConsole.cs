@@ -61,7 +61,7 @@ namespace Arbor.Tooler.ConsoleClient
         public static ToolerConsole Create(string[] args, ILogger logger) =>
             new(args, logger);
 
-        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Information)
+        public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Warning)
         {
             Logger logger = new LoggerConfiguration()
                 .WriteTo.Console(standardErrorFromLevel: minLevel, outputTemplate: OutputTemplate)

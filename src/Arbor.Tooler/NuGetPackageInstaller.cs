@@ -277,7 +277,7 @@ namespace Arbor.Tooler
         private static NuGet.Common.ILogger GetLogger(ILogger logger) =>
             logger == Logger.None ? NullLogger.Instance : new SerilogNuGetAdapter(logger);
 
-        private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsInternalAsync(
+        private async Task<ImmutableArray<SemanticVersion>>GetAllVersionsInternalAsync(
             NuGetPackageId packageId,
             string? nugetExePath = null,
             string? nuGetSource = null,
