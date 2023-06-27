@@ -24,15 +24,9 @@ namespace Arbor.Tooler
 
         public void LogInformationSummary(string data) => _logger.Information("{NuGetMessage}", data);
 
-        public void Log(LogLevel level, string data) => _logger.Write(GetLevel(level), "{NuGetMessage}", data);
-
-        public Task LogAsync(LogLevel level, string data)
-        {
-            _logger.Write(GetLevel(level), "{NuGetMessage}", data);
-            return Task.CompletedTask;
-        }
-
         public void Log(ILogMessage message) => _logger.Information("{NuGetMessage}", message.FormatWithCode());
+
+        public void Log(LogLevel level, string data) => _logger.Write(GetLevel(level), "{NuGetMessage}", data);
 
         public Task LogAsync(ILogMessage message)
         {
@@ -40,7 +34,13 @@ namespace Arbor.Tooler
             return Task.CompletedTask;
         }
 
-        private LogEventLevel GetLevel(LogLevel level) =>
+        public Task LogAsync(LogLevel level, string data)
+        {
+            _logger.Write(GetLevel(level), "{NuGetMessage}", data);
+            return Task.CompletedTask;
+        }
+
+        private static LogEventLevel GetLevel(LogLevel level) =>
             level switch
             {
                 LogLevel.Verbose => LogEventLevel.Verbose,

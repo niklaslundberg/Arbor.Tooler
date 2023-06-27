@@ -48,7 +48,7 @@ namespace Arbor.Tooler
                         }
 
                         await using Stream downloadStream =
-                            await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                            await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
                         const int defaultBufferSize = 8192;
                         await downloadStream.CopyToAsync(nugetExeFileStream,
                                 defaultBufferSize,
@@ -146,9 +146,9 @@ namespace Arbor.Tooler
                         output.Add(message);
                     },
                     standardErrorAction: StandardErrorAction,
-                    debugAction: DebugAction,
-                    verboseAction: VerboseAction,
                     toolAction: ToolAction,
+                    verboseAction: VerboseAction,
+                    debugAction: DebugAction,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 if (!exitCode.IsSuccess)

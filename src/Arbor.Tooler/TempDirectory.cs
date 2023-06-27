@@ -39,7 +39,7 @@ namespace Arbor.Tooler
         }
 
         public static TempDirectory CreateTempDirectory(string? name = null, DirectoryInfo? baseTempDirectory = null) =>
-            new TempDirectory(new DirectoryInfo(Path.Combine(baseTempDirectory?.FullName ?? Path.GetTempPath(),
+            new(new DirectoryInfo(Path.Combine(baseTempDirectory?.FullName ?? Path.GetTempPath(),
                 $"{name.WithDefault("AT")}-{DateTime.UtcNow.Ticks}")).EnsureExists());
     }
 }

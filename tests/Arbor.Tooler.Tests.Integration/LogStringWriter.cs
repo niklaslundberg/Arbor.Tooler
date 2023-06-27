@@ -7,7 +7,7 @@ namespace Arbor.Tooler.Tests.Integration
 {
     internal class LogStringWriter : StringWriter
     {
-        private readonly List<string> _buffer = new List<string>();
+        private readonly List<string> _buffer = new();
         private readonly Action<string?>? _logAction;
 
         public LogStringWriter(Action<string?>? logAction) => _logAction = logAction;

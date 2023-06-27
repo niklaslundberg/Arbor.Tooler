@@ -5,16 +5,14 @@ namespace Arbor.Tooler
 {
     public sealed class NuGetDownloadResult
     {
-        public static readonly NuGetDownloadResult Disabled = new NuGetDownloadResult(nameof(Disabled));
+        public static readonly NuGetDownloadResult Disabled = new(nameof(Disabled));
 
         public static readonly NuGetDownloadResult MissingNuGetDownloadUriFormat =
-            new NuGetDownloadResult(nameof(MissingNuGetDownloadUriFormat));
+            new(nameof(MissingNuGetDownloadUriFormat));
 
-        public static readonly NuGetDownloadResult MissingDownloadDirectory =
-            new NuGetDownloadResult(nameof(MissingDownloadDirectory));
+        public static readonly NuGetDownloadResult MissingDownloadDirectory = new(nameof(MissingDownloadDirectory));
 
-        public static readonly NuGetDownloadResult MissingNuGetExeVersion =
-            new NuGetDownloadResult(nameof(MissingNuGetExeVersion));
+        public static readonly NuGetDownloadResult MissingNuGetExeVersion = new(nameof(MissingNuGetExeVersion));
 
         private NuGetDownloadResult(string result, bool succeeded = false)
         {
@@ -36,18 +34,17 @@ namespace Arbor.Tooler
 
         public Exception? Exception { get; }
 
-        public static NuGetDownloadResult FromException(Exception exception) => new NuGetDownloadResult(exception);
+        public static NuGetDownloadResult FromException(Exception exception) => new(exception);
 
         public static NuGetDownloadResult InvalidDownloadUri(string downloadUri) =>
-            new NuGetDownloadResult($"Invalid download URI {downloadUri}");
+            new($"Invalid download URI {downloadUri}");
 
-        public static NuGetDownloadResult Success(string targetFilePath) =>
-            new NuGetDownloadResult(targetFilePath, true);
+        public static NuGetDownloadResult Success(string targetFilePath) => new(targetFilePath, true);
 
         public override string ToString() =>
             $"{nameof(NuGetExePath)}: {NuGetExePath}, {nameof(Result)}: {Result}, {nameof(Succeeded)}: {Succeeded}, {nameof(Exception)}: {Exception}";
 
-        public static NuGetDownloadResult DownloadFailed(HttpStatusCode statusCode) => new NuGetDownloadResult($"Http download status code was {(int)statusCode}", succeeded: false);
-        public static NuGetDownloadResult DownloadFailed(string message) => new NuGetDownloadResult(message, succeeded: false);
+        public static NuGetDownloadResult DownloadFailed(HttpStatusCode statusCode) => new($"Http download status code was {(int)statusCode}", succeeded: false);
+        public static NuGetDownloadResult DownloadFailed(string message) => new(message, succeeded: false);
     }
 }

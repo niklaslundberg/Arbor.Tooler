@@ -2,7 +2,7 @@
 
 namespace Arbor.Tooler
 {
-    public class NuGetPackageId : IEquatable<NuGetPackageId>
+    public sealed class NuGetPackageId : IEquatable<NuGetPackageId>
     {
         public bool Equals(NuGetPackageId? other)
         {

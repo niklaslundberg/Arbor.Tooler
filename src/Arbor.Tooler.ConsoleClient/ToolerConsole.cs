@@ -64,7 +64,7 @@ namespace Arbor.Tooler.ConsoleClient
         public static ToolerConsole Create(string[] args, LogEventLevel minLevel = LogEventLevel.Warning)
         {
             Logger logger = new LoggerConfiguration()
-                .WriteTo.Console(standardErrorFromLevel: minLevel, outputTemplate: OutputTemplate)
+                .WriteTo.Console(outputTemplate: OutputTemplate, standardErrorFromLevel: minLevel)
                 .MinimumLevel.Debug()
                 .CreateLogger();
 
@@ -91,11 +91,11 @@ namespace Arbor.Tooler.ConsoleClient
                     string? source = _args.GetCommandLineValue(CommandExtensions.Source);
                     string? config = _args.GetCommandLineValue(CommandExtensions.Config);
 
-                    var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), maxRows: maxRows, nuGetSource: source, nugetConfig: config);
+                    var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), nuGetSource: source, nugetConfig: config, maxRows: maxRows);
 
                     foreach (var package in packages)
                     {
-                        Logger.Information(package.ToNormalizedString());
+                        Logger.Information("{Version}", package.ToNormalizedString());
                     }
 
                     exitCode = 0;
@@ -120,7 +120,7 @@ namespace Arbor.Tooler.ConsoleClient
                         }
 
                         NuGetDownloadResult nuGetDownloadResult = await new NuGetDownloadClient().DownloadNuGetAsync(
-                            new NuGetDownloadSettings(downloadDirectory: downloadDirectory, nugetExeVersion: exeVersion, force: force),
+                            new NuGetDownloadSettings(nugetExeVersion: exeVersion, downloadDirectory: downloadDirectory, force: force),
                             Logger).ConfigureAwait(false);
 
                         if (nuGetDownloadResult.Succeeded)

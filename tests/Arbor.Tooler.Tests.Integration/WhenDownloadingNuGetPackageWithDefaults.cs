@@ -37,8 +37,8 @@ namespace Arbor.Tooler.Tests.Integration
 
             const string nugetSource = "LocalToolerTest";
 
-            var nugetCliSettings = new NuGetCliSettings(nugetConfigFile: nugetConfigFile,
-                nugetSourceName: nugetSource);
+            var nugetCliSettings = new NuGetCliSettings(nugetSourceName: nugetSource,
+nugetConfigFile: nugetConfigFile);
             var nugetDownloadClient = new NuGetDownloadClient();
 
             var installer =
