@@ -5,9 +5,9 @@ namespace Arbor.Tooler
 {
     public sealed class NuGetPackageVersion : IEquatable<NuGetPackageVersion>
     {
-        public static readonly NuGetPackageVersion Unavailable = new NuGetPackageVersion("n/a");
-        public static readonly NuGetPackageVersion LatestAvailable = new NuGetPackageVersion("latest-available");
-        public static readonly NuGetPackageVersion LatestDownloaded = new NuGetPackageVersion("latest-downloaded");
+        public static readonly NuGetPackageVersion Unavailable = new("n/a");
+        public static readonly NuGetPackageVersion LatestAvailable = new("latest-available");
+        public static readonly NuGetPackageVersion LatestDownloaded = new("latest-downloaded");
 
         public NuGetPackageVersion(SemanticVersion semanticVersion)
         {

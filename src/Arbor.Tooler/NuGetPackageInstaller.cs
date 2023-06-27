@@ -29,8 +29,7 @@ namespace Arbor.Tooler
         private readonly NuGetDownloadClient _nugetDownloadClient;
         private readonly NuGetDownloadSettings _nugetDownloadSettings;
 
-        private readonly ConcurrentDictionary<string, string> _sourcePrefixes =
-            new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _sourcePrefixes = new();
 
         public NuGetPackageInstaller(
             NuGetDownloadClient? nugetDownloadClient = null,
@@ -375,9 +374,9 @@ namespace Arbor.Tooler
                         }
                     },
                     (message, category) => _logger.Error("{Category} {Message}", category, message),
-                    debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
-                    verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
                     toolAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
+                    verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
+                    debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
                     cancellationToken: tokenSource.Token).ConfigureAwait(continueOnCapturedContext: false);
             }
             catch (Exception ex)
@@ -523,7 +522,7 @@ namespace Arbor.Tooler
         private void SetPrefix(string? nugetConfig, string? nuGetSource, string? prefix)
         {
             string key = GetConfigSourceKey(nugetConfig, nuGetSource);
-            _sourcePrefixes.TryRemove(key, out string _);
+            _sourcePrefixes.TryRemove(key, out string? _);
 
             _sourcePrefixes.TryAdd(key, prefix ?? "");
         }
@@ -762,9 +761,9 @@ namespace Arbor.Tooler
                 arguments,
                 (message, category) => _logger.Information("{Category} {Message}", category, message),
                 (message, category) => _logger.Error("{Category} {Message}", category, message),
-                debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
-                verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
                 toolAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
+                verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
+                debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
                 cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 
             if (!exitCode.IsSuccess)

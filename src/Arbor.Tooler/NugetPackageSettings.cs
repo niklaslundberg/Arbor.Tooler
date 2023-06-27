@@ -5,8 +5,7 @@ namespace Arbor.Tooler
 {
     public class NugetPackageSettings
     {
-        private static readonly Lazy<NugetPackageSettings> DefaultSettings =
-            new Lazy<NugetPackageSettings>(() => new NugetPackageSettings(false));
+        private static readonly Lazy<NugetPackageSettings> DefaultSettings = new(() => new NugetPackageSettings(false));
 
         public NugetPackageSettings(bool allowPreRelease, string? nugetSource = null, string? nugetConfigFile = null, DirectoryInfo? tempDirectory = null)
         {

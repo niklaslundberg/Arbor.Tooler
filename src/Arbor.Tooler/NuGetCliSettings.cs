@@ -4,8 +4,7 @@ namespace Arbor.Tooler
 {
     public class NuGetCliSettings
     {
-        private static readonly Lazy<NuGetCliSettings> DefaultSettings =
-            new Lazy<NuGetCliSettings>(() => new NuGetCliSettings());
+        private static readonly Lazy<NuGetCliSettings> DefaultSettings = new(() => new NuGetCliSettings());
 
         public NuGetCliSettings(
             string? nugetSourceName = null,

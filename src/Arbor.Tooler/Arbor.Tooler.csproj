@@ -2,16 +2,17 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Arbor.Processing" Version="0.6.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
-    <PackageReference Include="NewtonSoft.Json" Version="13.0.2" />
-    <PackageReference Include="NuGet.Configuration" Version="6.5.0" />
-    <PackageReference Include="NuGet.Protocol" Version="6.5.0" />
-    <PackageReference Include="NuGet.Versioning" Version="6.5.0" />
-    <PackageReference Include="Serilog" Version="2.12.0" />
+    <PackageReference Include="NewtonSoft.Json" Version="13.0.3" />
+    <PackageReference Include="NuGet.Configuration" Version="6.6.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.6.1" />
+    <PackageReference Include="NuGet.Versioning" Version="6.6.1" />
+    <PackageReference Include="Serilog" Version="3.0.1" />
   </ItemGroup>
 
 </Project>

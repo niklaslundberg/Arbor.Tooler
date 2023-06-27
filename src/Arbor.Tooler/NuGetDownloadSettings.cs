@@ -11,8 +11,7 @@ namespace Arbor.Tooler
         public const string DefaultNuGetExeDownloadUriFormat =
             "https://dist.nuget.org/win-x86-commandline/{0}/nuget.exe";
 
-        private static readonly Lazy<NuGetDownloadSettings> DefaultSettings =
-            new Lazy<NuGetDownloadSettings>(() => new NuGetDownloadSettings());
+        private static readonly Lazy<NuGetDownloadSettings> DefaultSettings = new(() => new NuGetDownloadSettings());
 
         public NuGetDownloadSettings(
             bool? nugetDownloadEnabled = null,
