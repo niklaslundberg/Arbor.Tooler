@@ -18,8 +18,8 @@
       },
       "JetBrains.Annotations": {
         "type": "Transitive",
-        "resolved": "2022.3.1",
-        "contentHash": "11nsS3+lFICGkztVs9PP2NRItxf9fF+qD6xEW/T0YGto52zj07wseUeBdMAU1ah9HNVTDZyRC1u4NWdtJScwhw=="
+        "resolved": "2023.2.0",
+        "contentHash": "dvO//8aLmLRsCVVgoc/7qBqi2/y4BTyRcg20LCBWtK4n6E9Um06Zp7jF1n0hOE+yqBHwcrDzAjWvCaM3qH8flg=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -109,7 +109,7 @@
         "type": "Project",
         "dependencies": {
           "Arbor.Processing": "[0.6.0, )",
-          "JetBrains.Annotations": "[2022.3.1, )",
+          "JetBrains.Annotations": "[2023.2.0, )",
           "NewtonSoft.Json": "[13.0.3, )",
           "NuGet.Configuration": "[6.6.1, )",
           "NuGet.Protocol": "[6.6.1, )",
@@ -135,8 +135,8 @@
       },
       "JetBrains.Annotations": {
         "type": "Transitive",
-        "resolved": "2022.3.1",
-        "contentHash": "11nsS3+lFICGkztVs9PP2NRItxf9fF+qD6xEW/T0YGto52zj07wseUeBdMAU1ah9HNVTDZyRC1u4NWdtJScwhw=="
+        "resolved": "2023.2.0",
+        "contentHash": "dvO//8aLmLRsCVVgoc/7qBqi2/y4BTyRcg20LCBWtK4n6E9Um06Zp7jF1n0hOE+yqBHwcrDzAjWvCaM3qH8flg=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -226,7 +226,7 @@
         "type": "Project",
         "dependencies": {
           "Arbor.Processing": "[0.6.0, )",
-          "JetBrains.Annotations": "[2022.3.1, )",
+          "JetBrains.Annotations": "[2023.2.0, )",
           "NewtonSoft.Json": "[13.0.3, )",
           "NuGet.Configuration": "[6.6.1, )",
           "NuGet.Protocol": "[6.6.1, )",
