@@ -14,6 +14,7 @@ namespace Arbor.Tooler.ConsoleClient
         public const string DownloadDirectory = "-outputdirectory";
         public const string ExeVersion = "-exe-version";
         public const string Force = "--force";
+        public const string AllowPreRelease = "--pre-release";
 
         public static string? GetCommandLineValue(this IEnumerable<string> keys, string key)
         {
