@@ -82,20 +82,21 @@ namespace Arbor.Tooler
             CancellationToken cancellationToken = default)
         {
             bool clientOwned = httpClient is null;
+            httpClient ??= new();
 
             var allVersions = await GetAllVersionsFromApiInternalAsync(
                 packageId,
                 nuGetSource,
                 nugetConfig,
                 allowPreRelease,
-                httpClient ?? new HttpClient(),
+                httpClient,
                 logger ?? Logger.None,
                 maxRows,
                 cancellationToken);
 
             if (clientOwned)
             {
-                httpClient?.Dispose();
+                httpClient.Dispose();
             }
 
             return allVersions;
@@ -141,7 +142,7 @@ namespace Arbor.Tooler
                 maxRows: maxRows);
         }
 
-        private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsFromApiInternalAsync(
+        private static async Task<ImmutableArray<SemanticVersion>> GetAllVersionsFromApiInternalAsync(
             NuGetPackageId packageId,
             string? nuGetSource,
             string? nugetConfig,
@@ -233,7 +234,7 @@ namespace Arbor.Tooler
                 .ToImmutableArray();
         }
 
-        private async Task<bool> IsV3Feed(PackageSource packageSource, HttpClient httpClient, HttpMethod httpMethod, CancellationToken cancellationToken)
+        private static async Task<bool> IsV3Feed(PackageSource packageSource, HttpClient httpClient, HttpMethod httpMethod, CancellationToken cancellationToken)
         {
             bool isV3Feed;
             using var request = new HttpRequestMessage(httpMethod, packageSource.SourceUri);
@@ -353,7 +354,7 @@ namespace Arbor.Tooler
                             string[] packageLines = lines.Where(
                                 line =>
                                     !string.IsNullOrWhiteSpace(line)
-                                    && !ignoredOutputStatements.Any(
+                                    && !ignoredOutputStatements.Exists(
                                         ignored => line.Contains(ignored, StringComparison.OrdinalIgnoreCase)))
                                 .NotNull()
                                 .ToArray();
@@ -419,7 +420,7 @@ namespace Arbor.Tooler
 
             var included = lines
                           .Where(line => line != null
-                                         && !ignoredOutputStatements.Any(ignored =>
+                                         && !ignoredOutputStatements.Exists(ignored =>
                                              line.Contains(ignored, StringComparison.InvariantCultureIgnoreCase)))
                           .NotNull()
                           .ToList();
@@ -433,7 +434,7 @@ namespace Arbor.Tooler
 
                         try
                         {
-                            string version = parts.Last();
+                            string version = parts[^1].Trim();
 
                             if (!SemanticVersion.TryParse(version, out var semanticVersion))
                             {
@@ -555,16 +556,16 @@ namespace Arbor.Tooler
             return downloadedPackage;
         }
 
-        private (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] GetDownloadedPackages(
+        private (DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)[] GetDownloadedPackages(
             NugetPackageSettings nugetPackageSettings,
             DirectoryInfo packageBaseDir)
         {
-            IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> versionDirectories =
+            IEnumerable<(DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)> versionDirectories =
                 packageBaseDir.EnumerateDirectories()
                     .Select(
                         dir =>
                         {
-                            bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion semanticVersion);
+                            bool parsed = SemanticVersion.TryParse(dir.Name, out SemanticVersion? semanticVersion);
 
                             return (Directory: dir, SemanticVersion: semanticVersion, Parsed: parsed);
                         })
@@ -572,7 +573,7 @@ namespace Arbor.Tooler
                         tuple => tuple.Parsed
                                  && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
 
-            IEnumerable<(DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)> filtered =
+            IEnumerable<(DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)> filtered =
                 versionDirectories;
 
             if (!nugetPackageSettings.AllowPreRelease)
@@ -584,7 +585,7 @@ namespace Arbor.Tooler
                 filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
             }
 
-            (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[]
+            (DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)[]
                 filteredArray = filtered.ToArray();
 
             return filteredArray;
@@ -836,7 +837,7 @@ namespace Arbor.Tooler
 
             if (!SemanticVersion.TryParse(
                 nugetPackageFileVersion,
-                out SemanticVersion nugetPackageFileSemanticVersion))
+                out SemanticVersion? nugetPackageFileSemanticVersion))
             {
                 _logger.Error(
                     "The downloaded file '{FullName}' is not a semantic version nuget package",

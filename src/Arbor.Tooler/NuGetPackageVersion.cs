@@ -71,7 +71,7 @@ namespace Arbor.Tooler
                 return true;
             }
 
-            if (!SemanticVersion.TryParse(version, out SemanticVersion semanticVersion))
+            if (!SemanticVersion.TryParse(version, out SemanticVersion? semanticVersion))
             {
                 nuGetPackageVersion = Unavailable;
                 return false;

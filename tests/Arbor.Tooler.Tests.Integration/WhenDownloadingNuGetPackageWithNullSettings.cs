@@ -26,7 +26,7 @@ namespace Arbor.Tooler.Tests.Integration
             var installer = new NuGetPackageInstaller(logger: testLogger);
 
             NuGetPackageInstallResult nuGetPackageInstallResult =
-                await installer.InstallPackageAsync("Arbor.Tooler").ConfigureAwait(false);
+                await installer.InstallPackageAsync("Arbor.Tooler");
 
             Assert.NotNull(nuGetPackageInstallResult);
             Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
@@ -38,7 +38,7 @@ namespace Arbor.Tooler.Tests.Integration
             _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
             _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
-            await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(3));
         }
     }
 }

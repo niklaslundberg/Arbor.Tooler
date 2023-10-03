@@ -59,7 +59,7 @@ nugetConfigFile: nugetConfigFile);
                 nuGetPackage,
                 nugetPackageSettings,
                 httpClient,
-                installBaseDirectory).ConfigureAwait(false);
+                installBaseDirectory);
 
             Assert.NotNull(nuGetPackageInstallResult);
             Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);

@@ -175,7 +175,7 @@ namespace Arbor.Tooler
                 string mayBeVersion = string.Join(".", semVerParts);
 
                 if (
-                    !SemanticVersion.TryParse(mayBeVersion, out SemanticVersion currentVersion))
+                    !SemanticVersion.TryParse(mayBeVersion, out SemanticVersion? currentVersion))
                 {
                     logger.Warning("Could not find nuget.exe version from value '{PossibleVersion}'", mayBeVersion);
                     return null;

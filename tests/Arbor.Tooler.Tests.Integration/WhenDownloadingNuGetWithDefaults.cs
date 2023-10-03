@@ -37,7 +37,7 @@ namespace Arbor.Tooler.Tests.Integration
                     nuGetDownloadSettings,
                     logger,
                     httpClient,
-                    CancellationToken.None).ConfigureAwait(false);
+                    CancellationToken.None);
 
             _output.WriteLine(nuGetDownloadResult.Result);
 
