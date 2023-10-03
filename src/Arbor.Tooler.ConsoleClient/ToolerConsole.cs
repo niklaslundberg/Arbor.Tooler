@@ -91,7 +91,10 @@ namespace Arbor.Tooler.ConsoleClient
                     string? source = _args.GetCommandLineValue(CommandExtensions.Source);
                     string? config = _args.GetCommandLineValue(CommandExtensions.Config);
 
-                    var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), nuGetSource: source, nugetConfig: config, maxRows: maxRows);
+                    bool allowPreRelease = _args.Any(arg =>
+                        arg.Equals(CommandExtensions.AllowPreRelease, StringComparison.OrdinalIgnoreCase));
+
+                    var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), nuGetSource: source, nugetConfig: config, maxRows: maxRows, allowPreRelease: allowPreRelease);
 
                     foreach (var package in packages)
                     {
