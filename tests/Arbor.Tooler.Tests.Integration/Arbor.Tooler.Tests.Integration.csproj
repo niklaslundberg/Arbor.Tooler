@@ -12,18 +12,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arbor.Aesculus" Version="3.6.0" />
-    <PackageReference Include="Arbor.Aesculus.NCrunch" Version="3.6.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
-    <PackageReference Include="FluentAssertions" Version="6.11.0" />
+    <PackageReference Include="Arbor.Aesculus" Version="3.7.0-build.1695931833" />
+    <PackageReference Include="Arbor.Aesculus.NCrunch" Version="3.7.0-build.1695931833" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
     <PackageReference Include="Serilog.Sinks.XUnit" Version="3.0.5" />
-    <PackageReference Include="xunit" Version="2.5.0" />
-    <PackageReference Include="xunit.runner.console" Version="2.5.0">
+    <PackageReference Include="xunit" Version="2.5.1" />
+    <PackageReference Include="xunit.runner.console" Version="2.5.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
