@@ -21,7 +21,7 @@ jobs:
         dotnet-version: 8.0.x
         dotnet-quality: 'preview'
         cache: true
-        cache-dependency-path: tests/Arbor.Aesculus.Tests.Integration
+        cache-dependency-path: tests/Arbor.Tooler.Tests.Integration
     - name: install-tools
       run: |
         dotnet tool install --global Arbor.Tooler.GlobalTool --version "*-*"
