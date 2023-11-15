@@ -4,11 +4,11 @@
     "net6.0": {
       "Serilog.Sinks.Console": {
         "type": "Direct",
-        "requested": "[4.1.0, )",
-        "resolved": "4.1.0",
-        "contentHash": "K6N5q+5fetjnJPvCmkWOpJ/V8IEIoMIB1s86OzBrbxwTyHxdx3pmz4H+8+O/Dc/ftUX12DM1aynx/dDowkwzqg==",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "IZ6bn79k+3SRXOBpwSOClUHikSkp2toGPCZ0teUkscv4dpDg9E2R2xVsNkLmwddE4OpNVO3N0xiYsAH556vN8Q==",
         "dependencies": {
-          "Serilog": "2.10.0"
+          "Serilog": "3.1.0"
         }
       },
       "Arbor.Processing": {
@@ -18,8 +18,8 @@
       },
       "JetBrains.Annotations": {
         "type": "Transitive",
-        "resolved": "2023.2.0",
-        "contentHash": "dvO//8aLmLRsCVVgoc/7qBqi2/y4BTyRcg20LCBWtK4n6E9Um06Zp7jF1n0hOE+yqBHwcrDzAjWvCaM3qH8flg=="
+        "resolved": "2023.3.0",
+        "contentHash": "PHfnvdBUdGaTVG9bR/GEfxgTwWM0Z97Y6X3710wiljELBISipSfF5okn/vz+C2gfO+ihoEyVPjaJwn8ZalVukA=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -74,8 +74,8 @@
       },
       "Serilog": {
         "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "E4UmOQ++eNJax1laE+lws7E3zbhKgHsGJbO7ra0yE5smUh+5FfUPIKKBxM3MO1tK4sgpQke6/pLReDxIc/ggNw=="
+        "resolved": "3.1.1",
+        "contentHash": "P6G4/4Kt9bT635bhuwdXlJ2SCqqn2nhh4gqFqQueCOr9bK/e7W9ll/IoX1Ter948cV2Z/5+5v8pAfJYUISY03A=="
       },
       "System.Formats.Asn1": {
         "type": "Transitive",
@@ -99,23 +99,23 @@
         "type": "Project",
         "dependencies": {
           "Arbor.Processing": "[0.6.0, )",
-          "JetBrains.Annotations": "[2023.2.0, )",
+          "JetBrains.Annotations": "[2023.3.0, )",
           "NewtonSoft.Json": "[13.0.3, )",
           "NuGet.Configuration": "[6.7.0, )",
           "NuGet.Protocol": "[6.7.0, )",
           "NuGet.Versioning": "[6.7.0, )",
-          "Serilog": "[3.0.1, )"
+          "Serilog": "[3.1.1, )"
         }
       }
     },
     "net7.0": {
       "Serilog.Sinks.Console": {
         "type": "Direct",
-        "requested": "[4.1.0, )",
-        "resolved": "4.1.0",
-        "contentHash": "K6N5q+5fetjnJPvCmkWOpJ/V8IEIoMIB1s86OzBrbxwTyHxdx3pmz4H+8+O/Dc/ftUX12DM1aynx/dDowkwzqg==",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "IZ6bn79k+3SRXOBpwSOClUHikSkp2toGPCZ0teUkscv4dpDg9E2R2xVsNkLmwddE4OpNVO3N0xiYsAH556vN8Q==",
         "dependencies": {
-          "Serilog": "2.10.0"
+          "Serilog": "3.1.0"
         }
       },
       "Arbor.Processing": {
@@ -125,8 +125,8 @@
       },
       "JetBrains.Annotations": {
         "type": "Transitive",
-        "resolved": "2023.2.0",
-        "contentHash": "dvO//8aLmLRsCVVgoc/7qBqi2/y4BTyRcg20LCBWtK4n6E9Um06Zp7jF1n0hOE+yqBHwcrDzAjWvCaM3qH8flg=="
+        "resolved": "2023.3.0",
+        "contentHash": "PHfnvdBUdGaTVG9bR/GEfxgTwWM0Z97Y6X3710wiljELBISipSfF5okn/vz+C2gfO+ihoEyVPjaJwn8ZalVukA=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -181,8 +181,8 @@
       },
       "Serilog": {
         "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "E4UmOQ++eNJax1laE+lws7E3zbhKgHsGJbO7ra0yE5smUh+5FfUPIKKBxM3MO1tK4sgpQke6/pLReDxIc/ggNw=="
+        "resolved": "3.1.1",
+        "contentHash": "P6G4/4Kt9bT635bhuwdXlJ2SCqqn2nhh4gqFqQueCOr9bK/e7W9ll/IoX1Ter948cV2Z/5+5v8pAfJYUISY03A=="
       },
       "System.Formats.Asn1": {
         "type": "Transitive",
@@ -206,23 +206,23 @@
         "type": "Project",
         "dependencies": {
           "Arbor.Processing": "[0.6.0, )",
-          "JetBrains.Annotations": "[2023.2.0, )",
+          "JetBrains.Annotations": "[2023.3.0, )",
           "NewtonSoft.Json": "[13.0.3, )",
           "NuGet.Configuration": "[6.7.0, )",
           "NuGet.Protocol": "[6.7.0, )",
           "NuGet.Versioning": "[6.7.0, )",
-          "Serilog": "[3.0.1, )"
+          "Serilog": "[3.1.1, )"
         }
       }
     },
     "net8.0": {
       "Serilog.Sinks.Console": {
         "type": "Direct",
-        "requested": "[4.1.0, )",
-        "resolved": "4.1.0",
-        "contentHash": "K6N5q+5fetjnJPvCmkWOpJ/V8IEIoMIB1s86OzBrbxwTyHxdx3pmz4H+8+O/Dc/ftUX12DM1aynx/dDowkwzqg==",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "IZ6bn79k+3SRXOBpwSOClUHikSkp2toGPCZ0teUkscv4dpDg9E2R2xVsNkLmwddE4OpNVO3N0xiYsAH556vN8Q==",
         "dependencies": {
-          "Serilog": "2.10.0"
+          "Serilog": "3.1.0"
         }
       },
       "Arbor.Processing": {
@@ -232,8 +232,8 @@
       },
       "JetBrains.Annotations": {
         "type": "Transitive",
-        "resolved": "2023.2.0",
-        "contentHash": "dvO//8aLmLRsCVVgoc/7qBqi2/y4BTyRcg20LCBWtK4n6E9Um06Zp7jF1n0hOE+yqBHwcrDzAjWvCaM3qH8flg=="
+        "resolved": "2023.3.0",
+        "contentHash": "PHfnvdBUdGaTVG9bR/GEfxgTwWM0Z97Y6X3710wiljELBISipSfF5okn/vz+C2gfO+ihoEyVPjaJwn8ZalVukA=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -288,8 +288,8 @@
       },
       "Serilog": {
         "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "E4UmOQ++eNJax1laE+lws7E3zbhKgHsGJbO7ra0yE5smUh+5FfUPIKKBxM3MO1tK4sgpQke6/pLReDxIc/ggNw=="
+        "resolved": "3.1.1",
+        "contentHash": "P6G4/4Kt9bT635bhuwdXlJ2SCqqn2nhh4gqFqQueCOr9bK/e7W9ll/IoX1Ter948cV2Z/5+5v8pAfJYUISY03A=="
       },
       "System.Formats.Asn1": {
         "type": "Transitive",
@@ -313,12 +313,12 @@
         "type": "Project",
         "dependencies": {
           "Arbor.Processing": "[0.6.0, )",
-          "JetBrains.Annotations": "[2023.2.0, )",
+          "JetBrains.Annotations": "[2023.3.0, )",
           "NewtonSoft.Json": "[13.0.3, )",
           "NuGet.Configuration": "[6.7.0, )",
           "NuGet.Protocol": "[6.7.0, )",
           "NuGet.Versioning": "[6.7.0, )",
-          "Serilog": "[3.0.1, )"
+          "Serilog": "[3.1.1, )"
         }
       }
     }
