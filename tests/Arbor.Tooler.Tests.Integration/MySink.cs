@@ -2,37 +2,36 @@
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Arbor.Tooler.Tests.Integration
+namespace Arbor.Tooler.Tests.Integration;
+
+public class MySink : ILogEventSink
 {
-    public class MySink : ILogEventSink
+    private readonly IFormatProvider? _formatProvider;
+    private readonly Action<string> _logAction;
+
+    public MySink(Action<string> logAction, IFormatProvider? formatProvider)
     {
-        private readonly IFormatProvider? _formatProvider;
-        private readonly Action<string> _logAction;
+        _logAction = logAction;
+        _formatProvider = formatProvider;
+    }
 
-        public MySink(Action<string> logAction, IFormatProvider? formatProvider)
+    public void Emit(LogEvent logEvent)
+    {
+        string message = logEvent.RenderMessage(_formatProvider);
+
+        if (!string.IsNullOrWhiteSpace(message))
         {
-            _logAction = logAction;
-            _formatProvider = formatProvider;
+            _logAction($"{DateTimeOffset.Now} [{logEvent.Level}] {message}");
         }
-
-        public void Emit(LogEvent logEvent)
+        else
         {
-            string message = logEvent.RenderMessage(_formatProvider);
-
-            if (!string.IsNullOrWhiteSpace(message))
+            if (logEvent.Exception != null)
             {
-                _logAction($"{DateTimeOffset.Now} [{logEvent.Level}] {message}");
+                _logAction(logEvent.Exception.ToString());
             }
             else
             {
-                if (logEvent.Exception != null)
-                {
-                    _logAction(logEvent.Exception.ToString());
-                }
-                else
-                {
-                    _logAction(logEvent.MessageTemplate.Render(logEvent.Properties));
-                }
+                _logAction(logEvent.MessageTemplate.Render(logEvent.Properties));
             }
         }
     }

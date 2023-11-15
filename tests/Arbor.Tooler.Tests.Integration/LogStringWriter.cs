@@ -3,63 +3,62 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Arbor.Tooler.Tests.Integration
+namespace Arbor.Tooler.Tests.Integration;
+
+internal class LogStringWriter : StringWriter
 {
-    internal class LogStringWriter : StringWriter
+    private readonly List<string> _buffer = new();
+    private readonly Action<string?>? _logAction;
+
+    public LogStringWriter(Action<string?>? logAction) => _logAction = logAction;
+
+    private void DoFlush()
     {
-        private readonly List<string> _buffer = new();
-        private readonly Action<string?>? _logAction;
-
-        public LogStringWriter(Action<string?>? logAction) => _logAction = logAction;
-
-        private void DoFlush()
+        if (_buffer.Count > 0)
         {
-            if (_buffer.Count > 0)
-            {
-                _logAction?.Invoke(string.Concat(_buffer));
-            }
+            _logAction?.Invoke(string.Concat(_buffer));
+        }
+    }
+
+    public override void WriteLine(string? value) => _logAction?.Invoke(value);
+
+    public override void Write(string? format, params object?[] arg)
+    {
+        if (format is null)
+        {
+            return;
         }
 
-        public override void WriteLine(string? value) => _logAction?.Invoke(value);
+        _logAction?.Invoke(string.Format(format, arg));
+    }
 
-        public override void Write(string? format, params object?[] arg)
+    public override void Write(string? value)
+    {
+        if (value is null)
         {
-            if (format is null)
-            {
-                return;
-            }
-
-            _logAction?.Invoke(string.Format(format, arg));
+            return;
         }
 
-        public override void Write(string? value)
+        if (value.Contains(Environment.NewLine))
         {
-            if (value is null)
-            {
-                return;
-            }
-
-            if (value.Contains(Environment.NewLine))
-            {
-                _logAction?.Invoke(string.Concat(_buffer) + value);
-            }
-            else
-            {
-                _buffer.Add(value);
-            }
+            _logAction?.Invoke(string.Concat(_buffer) + value);
         }
-
-        public override void Flush()
+        else
         {
-            DoFlush();
-
-            base.Flush();
+            _buffer.Add(value);
         }
+    }
 
-        public override async Task FlushAsync()
-        {
-            DoFlush();
-            await base.FlushAsync().ConfigureAwait(false);
-        }
+    public override void Flush()
+    {
+        DoFlush();
+
+        base.Flush();
+    }
+
+    public override async Task FlushAsync()
+    {
+        DoFlush();
+        await base.FlushAsync().ConfigureAwait(false);
     }
 }

@@ -7,68 +7,67 @@ using Serilog.Core;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Arbor.Tooler.Tests.Integration
+namespace Arbor.Tooler.Tests.Integration;
+
+public class WhenDownloadingNuGetPackageWithDefaults
 {
-    public class WhenDownloadingNuGetPackageWithDefaults
+    public WhenDownloadingNuGetPackageWithDefaults(ITestOutputHelper output) => _output = output;
+
+    private readonly ITestOutputHelper _output;
+
+    [Fact]
+    public async Task ItShouldHaveDownloadedTheLatestVersion()
     {
-        public WhenDownloadingNuGetPackageWithDefaults(ITestOutputHelper output) => _output = output;
+        using var nugetExeDownloadDir = TempDirectory.CreateTempDirectory();
+        using var packagesTempDir = TempDirectory.CreateTempDirectory();
+        using var httpClient = new HttpClient();
+        Logger testLogger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine).MinimumLevel
+            .Verbose()
+            .CreateLogger();
 
-        private readonly ITestOutputHelper _output;
+        await using Logger logger = testLogger;
+        var nugetDownloadSettings =
+            new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory?.FullName);
 
-        [Fact]
-        public async Task ItShouldHaveDownloadedTheLatestVersion()
-        {
-            using var nugetExeDownloadDir = TempDirectory.CreateTempDirectory();
-            using var packagesTempDir = TempDirectory.CreateTempDirectory();
-            using var httpClient = new HttpClient();
-            Logger testLogger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine).MinimumLevel
-                .Verbose()
-                .CreateLogger();
+        string nugetConfigFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!,
+            "tests",
+            "Arbor.Tooler.Tests.Integration",
+            "testconfig",
+            "nuget.config");
 
-            await using Logger logger = testLogger;
-            var nugetDownloadSettings =
-                new NuGetDownloadSettings(downloadDirectory: nugetExeDownloadDir.Directory?.FullName);
+        const string nugetSource = "LocalToolerTest";
 
-            string nugetConfigFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!,
-                "tests",
-                "Arbor.Tooler.Tests.Integration",
-                "testconfig",
-                "nuget.config");
+        var nugetCliSettings = new NuGetCliSettings(nugetSourceName: nugetSource,
+            nugetConfigFile: nugetConfigFile);
+        var nugetDownloadClient = new NuGetDownloadClient();
 
-            const string nugetSource = "LocalToolerTest";
+        var installer =
+            new NuGetPackageInstaller(nugetDownloadClient,
+                nugetCliSettings,
+                nugetDownloadSettings,
+                logger);
 
-            var nugetCliSettings = new NuGetCliSettings(nugetSourceName: nugetSource,
-nugetConfigFile: nugetConfigFile);
-            var nugetDownloadClient = new NuGetDownloadClient();
+        var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
+            NuGetPackageVersion.LatestAvailable);
+        var nugetPackageSettings = new NugetPackageSettings(false,
+            nugetSource,
+            nugetConfigFile);
 
-            var installer =
-                new NuGetPackageInstaller(nugetDownloadClient,
-                    nugetCliSettings,
-                    nugetDownloadSettings,
-                    logger);
+        DirectoryInfo? installBaseDirectory = packagesTempDir.Directory;
 
-            var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
-                NuGetPackageVersion.LatestAvailable);
-            var nugetPackageSettings = new NugetPackageSettings(false,
-                nugetSource,
-                nugetConfigFile);
+        NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(
+            nuGetPackage,
+            nugetPackageSettings,
+            httpClient,
+            installBaseDirectory);
 
-            DirectoryInfo? installBaseDirectory = packagesTempDir.Directory;
+        Assert.NotNull(nuGetPackageInstallResult);
+        Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
 
-            NuGetPackageInstallResult nuGetPackageInstallResult = await installer.InstallPackageAsync(
-                nuGetPackage,
-                nugetPackageSettings,
-                httpClient,
-                installBaseDirectory).ConfigureAwait(false);
+        _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+        _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+        _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
-            Assert.NotNull(nuGetPackageInstallResult);
-            Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
-
-            _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
-            _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
-            _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
-
-            Assert.Equal("1.0.0", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
-        }
+        Assert.Equal("1.0.0", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
     }
 }

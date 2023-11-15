@@ -7,41 +7,40 @@ using Serilog.Core;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Arbor.Tooler.Tests.Integration
+namespace Arbor.Tooler.Tests.Integration;
+
+public class WhenDownloadingNuGetWithDefaults
 {
-    public class WhenDownloadingNuGetWithDefaults
+    public WhenDownloadingNuGetWithDefaults(ITestOutputHelper output) => _output = output;
+
+    private readonly ITestOutputHelper _output;
+
+    [Fact]
+    public async Task ThenItShouldDownloadTheNuGetExeSuccessfully()
     {
-        public WhenDownloadingNuGetWithDefaults(ITestOutputHelper output) => _output = output;
+        using var tempDirectory = TempDirectory.CreateTempDirectory();
+        using var httpClient = new HttpClient();
+        var nuGetDownloadClient = new NuGetDownloadClient();
 
-        private readonly ITestOutputHelper _output;
+        var nuGetDownloadSettings =
+            new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory!.FullName);
 
-        [Fact]
-        public async Task ThenItShouldDownloadTheNuGetExeSuccessfully()
-        {
-            using var tempDirectory = TempDirectory.CreateTempDirectory();
-            using var httpClient = new HttpClient();
-            var nuGetDownloadClient = new NuGetDownloadClient();
+        await using var logWriter = new LogStringWriter(_output.WriteLine);
+        Console.SetOut(logWriter);
 
-            var nuGetDownloadSettings =
-                new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory!.FullName);
+        await using Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
+            .MinimumLevel.Verbose()
+            .CreateLogger();
 
-            await using var logWriter = new LogStringWriter(_output.WriteLine);
-            Console.SetOut(logWriter);
+        NuGetDownloadResult nuGetDownloadResult =
+            await nuGetDownloadClient.DownloadNuGetAsync(
+                nuGetDownloadSettings,
+                logger,
+                httpClient,
+                CancellationToken.None);
 
-            await using Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
-                .MinimumLevel.Verbose()
-                .CreateLogger();
+        _output.WriteLine(nuGetDownloadResult.Result);
 
-            NuGetDownloadResult nuGetDownloadResult =
-                await nuGetDownloadClient.DownloadNuGetAsync(
-                    nuGetDownloadSettings,
-                    logger,
-                    httpClient,
-                    CancellationToken.None).ConfigureAwait(false);
-
-            _output.WriteLine(nuGetDownloadResult.Result);
-
-            Assert.True(nuGetDownloadResult.Succeeded);
-        }
+        Assert.True(nuGetDownloadResult.Succeeded);
     }
 }

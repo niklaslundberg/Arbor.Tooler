@@ -2,92 +2,91 @@
 using System.IO;
 using Serilog;
 
-namespace Arbor.Tooler
+namespace Arbor.Tooler;
+
+internal static class DirectoryHelper
 {
-    internal static class DirectoryHelper
+    public static string UserLocalAppDataDirectory() =>
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+    public static DirectoryInfo FromPathSegments(string first, params string[]? otherParts)
     {
-        public static string UserLocalAppDataDirectory() =>
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-        public static DirectoryInfo FromPathSegments(string first, params string[]? otherParts)
+        if (string.IsNullOrWhiteSpace(first))
         {
-            if (string.IsNullOrWhiteSpace(first))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(first));
-            }
-
-            if (otherParts is null || otherParts.Length == 0)
-            {
-                return new DirectoryInfo(first);
-            }
-
-            string fullPath = Path.Combine(first, Path.Combine(otherParts));
-
-            return new DirectoryInfo(fullPath);
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(first));
         }
 
-        public static DirectoryInfo EnsureExists(this DirectoryInfo directoryInfo)
+        if (otherParts is null || otherParts.Length == 0)
         {
-            if (directoryInfo == null)
-            {
-                throw new ArgumentNullException(nameof(directoryInfo));
-            }
-
-            directoryInfo.Refresh();
-
-            if (!directoryInfo.Exists)
-            {
-                directoryInfo.Create();
-            }
-
-            return directoryInfo;
+            return new DirectoryInfo(first);
         }
 
-        public static void CopyRecursiveTo(
-            this DirectoryInfo? sourceDirectory,
-            DirectoryInfo targetDirectory,
-            ILogger? logger = null)
+        string fullPath = Path.Combine(first, Path.Combine(otherParts));
+
+        return new DirectoryInfo(fullPath);
+    }
+
+    public static DirectoryInfo EnsureExists(this DirectoryInfo directoryInfo)
+    {
+        if (directoryInfo == null)
         {
-            if (targetDirectory == null)
-            {
-                throw new ArgumentNullException(nameof(targetDirectory));
-            }
+            throw new ArgumentNullException(nameof(directoryInfo));
+        }
 
-            if (sourceDirectory is null)
-            {
-                return;
-            }
+        directoryInfo.Refresh();
 
-            if (sourceDirectory.FullName.Equals(targetDirectory.FullName))
-            {
-                throw new InvalidOperationException(
-                    $"Could not copy from and to the same directory '{sourceDirectory.FullName}'");
-            }
+        if (!directoryInfo.Exists)
+        {
+            directoryInfo.Create();
+        }
 
-            sourceDirectory.Refresh();
+        return directoryInfo;
+    }
 
-            if (!sourceDirectory.Exists)
-            {
-                logger?.Verbose("Source directory {Source} does not exist", sourceDirectory.FullName);
-                return;
-            }
+    public static void CopyRecursiveTo(
+        this DirectoryInfo? sourceDirectory,
+        DirectoryInfo targetDirectory,
+        ILogger? logger = null)
+    {
+        if (targetDirectory == null)
+        {
+            throw new ArgumentNullException(nameof(targetDirectory));
+        }
 
-            targetDirectory.EnsureExists();
+        if (sourceDirectory is null)
+        {
+            return;
+        }
 
-            foreach (FileInfo file in sourceDirectory.EnumerateFiles())
-            {
-                string targetFilePath = Path.Combine(targetDirectory.FullName, file.Name);
+        if (sourceDirectory.FullName.Equals(targetDirectory.FullName))
+        {
+            throw new InvalidOperationException(
+                $"Could not copy from and to the same directory '{sourceDirectory.FullName}'");
+        }
 
-                logger?.Verbose("Copying file '{From}' '{To}'", file.FullName, targetFilePath);
+        sourceDirectory.Refresh();
 
-                file.CopyTo(targetFilePath, true);
-            }
+        if (!sourceDirectory.Exists)
+        {
+            logger?.Verbose("Source directory {Source} does not exist", sourceDirectory.FullName);
+            return;
+        }
 
-            foreach (DirectoryInfo subDirectory in sourceDirectory.EnumerateDirectories())
-            {
-                CopyRecursiveTo(subDirectory,
-                    new DirectoryInfo(Path.Combine(targetDirectory.FullName, subDirectory.Name)));
-            }
+        targetDirectory.EnsureExists();
+
+        foreach (FileInfo file in sourceDirectory.EnumerateFiles())
+        {
+            string targetFilePath = Path.Combine(targetDirectory.FullName, file.Name);
+
+            logger?.Verbose("Copying file '{From}' '{To}'", file.FullName, targetFilePath);
+
+            file.CopyTo(targetFilePath, true);
+        }
+
+        foreach (DirectoryInfo subDirectory in sourceDirectory.EnumerateDirectories())
+        {
+            CopyRecursiveTo(subDirectory,
+                new DirectoryInfo(Path.Combine(targetDirectory.FullName, subDirectory.Name)));
         }
     }
 }
