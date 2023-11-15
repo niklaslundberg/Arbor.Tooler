@@ -9,7 +9,7 @@ namespace Arbor.Tooler.ConsoleClient;
 
 public sealed class ToolerConsole : IDisposable
 {
-    public const string OutputTemplate = "{Message:1}{NewLine}";
+    public const string OutputTemplate = "{Message:l}{NewLine}";
     private readonly string[] _args;
 
     public ILogger Logger { get; private set; }
