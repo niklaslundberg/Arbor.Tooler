@@ -39,6 +39,7 @@ public class WhenDownloadingNuGetPackageWithDefaults
 
         var nugetCliSettings = new NuGetCliSettings(nugetSourceName: nugetSource,
             nugetConfigFile: nugetConfigFile);
+
         var nugetDownloadClient = new NuGetDownloadClient();
 
         var installer =
@@ -49,9 +50,12 @@ public class WhenDownloadingNuGetPackageWithDefaults
 
         var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
             NuGetPackageVersion.LatestAvailable);
-        var nugetPackageSettings = new NugetPackageSettings(false,
-            nugetSource,
-            nugetConfigFile);
+        var nugetPackageSettings = new NugetPackageSettings
+        {
+            NugetSource = nugetSource,
+            NugetConfigFile = nugetConfigFile,
+            UseCli = true
+        };
 
         DirectoryInfo? installBaseDirectory = packagesTempDir.Directory;
 

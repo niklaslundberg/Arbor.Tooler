@@ -25,8 +25,11 @@ public class WhenDownloadingNuGetPackageWithNullSettings
 
         var installer = new NuGetPackageInstaller(logger: testLogger);
 
+        var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.Tooler"));
+        var nugetPackageSettings = new NugetPackageSettings { UseCli = true };
+
         NuGetPackageInstallResult nuGetPackageInstallResult =
-            await installer.InstallPackageAsync("Arbor.Tooler");
+            await installer.InstallPackageAsync(nuGetPackage, nugetPackageSettings);
 
         Assert.NotNull(nuGetPackageInstallResult);
         Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);

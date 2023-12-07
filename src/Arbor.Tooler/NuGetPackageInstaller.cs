@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -11,7 +12,6 @@ using System.Threading.Tasks;
 using Arbor.Processing;
 using NuGet.Common;
 using NuGet.Configuration;
-using NuGet.Packaging;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
@@ -20,6 +20,8 @@ using Serilog.Events;
 using ILogger = Serilog.ILogger;
 
 namespace Arbor.Tooler;
+
+public record PackageFromResource(NuGetPackage Package, FindPackageByIdResource Resource, SourceCacheContext SourceCacheContext);
 
 public class NuGetPackageInstaller
 {
@@ -88,10 +90,8 @@ public class NuGetPackageInstaller
             packageId,
             nuGetSource,
             nugetConfig,
-            allowPreRelease,
             httpClient,
             logger ?? Logger.None,
-            maxRows,
             cancellationToken);
 
         if (clientOwned)
@@ -99,7 +99,22 @@ public class NuGetPackageInstaller
             httpClient.Dispose();
         }
 
-        return allVersions;
+        return Filter(allVersions, allowPreRelease, maxRows);
+    }
+
+    private static ImmutableArray<SemanticVersion> Filter(ImmutableArray<PackageFromResource> packages, bool allowPreRelease, int maxRows)
+    {
+        var semanticVersions =
+            packages.Select(package => package.Package.NuGetPackageVersion.SemanticVersion)
+                .NotNull()
+                .ToHashSet();
+
+        return (allowPreRelease
+                ? semanticVersions
+                : semanticVersions.Where(semanticVersion => !semanticVersion.IsPrerelease))
+            .OrderByDescending(version => version)
+            .Take(maxRows)
+            .ToImmutableArray();
     }
 
     public async Task<ImmutableArray<SemanticVersion>> GetAllVersionsAsync(
@@ -119,15 +134,18 @@ public class NuGetPackageInstaller
             using var client = new HttpClient();
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds ?? 30));
 
-            return await GetAllVersionsFromApiInternalAsync(
+            var allVersions = await GetAllVersionsFromApiInternalAsync(
                 packageId,
                 nuGetSource,
                 nugetConfig,
-                allowPreRelease,
                 client,
                 Logger.None,
-                maxRows,
                 tokenSource.Token);
+
+            return allVersions
+                .Select(version => version.Package.NuGetPackageVersion.SemanticVersion)
+                .NotNull()
+                .ToImmutableArray();
         }
 
         return await GetAllVersionsInternalAsync(
@@ -142,14 +160,12 @@ public class NuGetPackageInstaller
             maxRows: maxRows);
     }
 
-    private static async Task<ImmutableArray<SemanticVersion>> GetAllVersionsFromApiInternalAsync(
+    private static async Task<ImmutableArray<PackageFromResource>> GetAllVersionsFromApiInternalAsync(
         NuGetPackageId packageId,
         string? nuGetSource,
         string? nugetConfig,
-        bool allowPreRelease,
         HttpClient httpClient,
         ILogger logger,
-        int maxRows,
         CancellationToken cancellationToken)
     {
         ISettings? settings = null;
@@ -173,7 +189,7 @@ public class NuGetPackageInstaller
 
         NuGet.Common.ILogger nugetLogger = GetLogger(logger);
 
-        var semanticVersions = new HashSet<SemanticVersion>();
+        var packageFromResources = new List<PackageFromResource>();
 
         foreach (var packageSource in sources)
         {
@@ -194,7 +210,7 @@ public class NuGetPackageInstaller
                 }
                 else
                 {
-                    isV3Feed = await IsV3Feed(packageSource, httpClient, HttpMethod.Head,  cancellationToken);
+                    isV3Feed = await IsV3Feed(packageSource, httpClient, HttpMethod.Head, cancellationToken);
                 }
 
                 repository = isV3Feed
@@ -220,18 +236,13 @@ public class NuGetPackageInstaller
                 nugetLogger,
                 cancellationToken)).ToArray();
 
-            semanticVersions.AddRange(
+            packageFromResources.AddRange(
                 versions
-                    .Where(nuGetVersion => SemanticVersion.TryParse(nuGetVersion.OriginalVersion, out _))
-                    .Select(nuGetVersion => SemanticVersion.Parse(nuGetVersion.OriginalVersion)));
+                    .Where(nuGetVersion => SemanticVersion.TryParse(nuGetVersion.OriginalVersion!, out _))
+                    .Select(nuGetVersion => SemanticVersion.Parse(nuGetVersion.OriginalVersion!)).Select(item => new PackageFromResource(new NuGetPackage(packageId, new NuGetPackageVersion(item)), resource, cache)));
         }
 
-        return (allowPreRelease
-                ? semanticVersions
-                : semanticVersions.Where(semanticVersion => !semanticVersion.IsPrerelease))
-            .OrderByDescending(version => version)
-            .Take(maxRows)
-            .ToImmutableArray();
+        return packageFromResources.ToImmutableArray();
     }
 
     private static async Task<bool> IsV3Feed(PackageSource packageSource, HttpClient httpClient, HttpMethod httpMethod, CancellationToken cancellationToken)
@@ -277,7 +288,7 @@ public class NuGetPackageInstaller
     private static NuGet.Common.ILogger GetLogger(ILogger logger) =>
         logger == Logger.None ? NullLogger.Instance : new SerilogNuGetAdapter(logger);
 
-    private async Task<ImmutableArray<SemanticVersion>>GetAllVersionsInternalAsync(
+    private async Task<ImmutableArray<SemanticVersion>> GetAllVersionsInternalAsync(
         NuGetPackageId packageId,
         string? nugetExePath = null,
         string? nuGetSource = null,
@@ -301,7 +312,7 @@ public class NuGetPackageInstaller
             ? new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds.Value))
             : new CancellationTokenSource();
 
-        var nugetArguments = new List<string> {"list", $"{prefix}{packageId}", "-AllVersions"};
+        var nugetArguments = new List<string> { "list", $"{prefix}{packageId}", "-AllVersions" };
 
         if (!string.IsNullOrWhiteSpace(nuGetSource))
         {
@@ -333,7 +344,7 @@ public class NuGetPackageInstaller
         _logger.Information("Getting available versions of package id {PackageId}", packageId.PackageId);
 
         var ignoredOutputStatements =
-            new List<string> {"Using credentials", "No packages found", "MSBuild auto-detection"};
+            new List<string> { "Using credentials", "No packages found", "MSBuild auto-detection" };
 
         var lines = new List<string?>();
         ExitCode exitCode;
@@ -532,20 +543,15 @@ public class NuGetPackageInstaller
     {
         string key = GetConfigSourceKey(nugetConfig, nuGetSource);
 
-        if (!_sourcePrefixes.TryGetValue(key, out string? prefix))
-        {
-            return "";
-        }
-
-        return prefix;
+        return _sourcePrefixes.GetValueOrDefault(key, "");
     }
 
     private static string GetConfigSourceKey(string? nugetConfig, string? nuGetSource) =>
         $"{nugetConfig}_$$$_{nuGetSource}";
 
-    private static (DirectoryInfo? Directory, SemanticVersion SemanticVersion, bool Parsed) GetDownloadedPackage(
+    private static (DirectoryInfo? Directory, SemanticVersion? SemanticVersion, bool Parsed) GetDownloadedPackage(
         NuGetPackage nugetPackage,
-        (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] downloadedPackages)
+        (DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)[] downloadedPackages)
     {
         var downloadedPackage =
             downloadedPackages.SingleOrDefault(
@@ -574,7 +580,7 @@ public class NuGetPackageInstaller
                              && tuple.Directory.GetFiles("*.nupkg", SearchOption.AllDirectories).Length > 0);
 
         IEnumerable<(DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)> filtered =
-            versionDirectories;
+            versionDirectories.Where(item => item.Parsed);
 
         if (!nugetPackageSettings.AllowPreRelease)
         {
@@ -582,13 +588,10 @@ public class NuGetPackageInstaller
                 "Filtering out pre-release versions in package directory '{PackageDirectory}'",
                 packageBaseDir);
 
-            filtered = filtered.Where(version => !version.SemanticVersion.IsPrerelease);
+            filtered = filtered.Where(version => !version.SemanticVersion!.IsPrerelease);
         }
 
-        (DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)[]
-            filteredArray = filtered.ToArray();
-
-        return filteredArray;
+        return filtered.ToArray();
     }
 
     private async Task<string?> GetNuGetExePathAsync(
@@ -645,7 +648,7 @@ public class NuGetPackageInstaller
 
         var downloadPathFromEnvironment = DownloadPathFromEnvironment();
 
-        DirectoryInfo fallbackDirectory = downloadPathFromEnvironment ??  DirectoryHelper.FromPathSegments(
+        DirectoryInfo fallbackDirectory = downloadPathFromEnvironment ?? DirectoryHelper.FromPathSegments(
             DirectoryHelper.UserLocalAppDataDirectory(),
             "Arbor.Tooler",
             "packages");
@@ -662,7 +665,7 @@ public class NuGetPackageInstaller
                 nugetPackage.NuGetPackageId.PackageId)
             .EnsureExists();
 
-        (DirectoryInfo Directory, SemanticVersion SemanticVersion, bool Parsed)[] downloadedPackages =
+        (DirectoryInfo Directory, SemanticVersion? SemanticVersion, bool Parsed)[] downloadedPackages =
             GetDownloadedPackages(nugetPackageSettings, packageBaseDir);
 
         if (nugetPackage.NuGetPackageVersion == NuGetPackageVersion.LatestDownloaded)
@@ -674,7 +677,7 @@ public class NuGetPackageInstaller
 
                 _logger.Debug(
                     "Found existing version {ExistingVersion}",
-                    latest.SemanticVersion.ToNormalizedString());
+                    latest.SemanticVersion?.ToNormalizedString());
 
                 return new NuGetPackageInstallResult(
                     nugetPackage.NuGetPackageId,
@@ -704,85 +707,53 @@ public class NuGetPackageInstaller
             }
         }
 
-        string? nugetExePath = await GetNuGetExePathAsync(httpClient, cancellationToken)
-            .ConfigureAwait(continueOnCapturedContext: false);
+        using var tempDirectory = TempDirectory.CreateTempDirectory(baseTempDirectory: nugetPackageSettings.TempDirectory);
 
-        var arguments = new List<string> {"install", nugetPackage.NuGetPackageId.PackageId};
-
-        if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetConfigFile))
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT && nugetPackageSettings.UseCli)
         {
-            if (!File.Exists(nugetPackageSettings.NugetConfigFile))
-            {
-                _logger.Error(
-                    "The specified NuGetConfig file {NuGetConfigFile} does not exist",
-                    nugetPackageSettings.NugetConfigFile);
+            var result = await DownloadPackageWithNuGetExe(nugetPackage, nugetPackageSettings, tempDirectory, httpClient, cancellationToken);
 
-                return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+            if (result == NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId))
+            {
+                return result;
             }
 
-            arguments.Add("-ConfigFile");
-            arguments.Add(nugetPackageSettings.NugetConfigFile);
         }
-
-        if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetSource))
+        else
         {
-            arguments.Add("-Source");
-            arguments.Add(nugetPackageSettings.NugetSource);
-        }
+            var result = await DownloadPackageWithHttp(nugetPackage, nugetPackageSettings, tempDirectory, httpClient, cancellationToken);
 
-        if (nugetPackage.NuGetPackageVersion.SemanticVersion != null)
-        {
-            arguments.Add("-Version");
-            arguments.Add(nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
-        }
+            if (result == NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId))
+            {
+                return result;
+            }
 
-        if (nugetPackageSettings.AllowPreRelease)
-        {
-            arguments.Add("-PreRelease");
-        }
+            string fileName = GetDownloadFileName(nugetPackage);
+            string sourceFile = Path.Combine(tempDirectory.Directory!.FullName, fileName);
+            string targetFile = Path.Combine(packageInstallBaseDirectory.FullName, fileName);
+            packageInstallBaseDirectory.Create();
+            File.Copy(sourceFile,  targetFile);
 
-        if (_logger.IsEnabled(LogEventLevel.Debug))
-        {
-            arguments.Add("-verbosity");
-            arguments.Add("detailed");
-        }
+            if (packageBaseDir.GetFiles().Length + packageBaseDir.GetDirectories().Length == 0)
+            {
+                packageBaseDir.Delete();
+            }
 
-        using var tempDirectory = TempDirectory.CreateTempDirectory(baseTempDirectory: nugetPackageSettings.TempDirectory);
-        arguments.Add("-OutputDirectory");
-        arguments.Add(tempDirectory.Directory!.FullName);
+            if (nugetPackageSettings.Extract)
+            {
+                await using var packageFileStream = File.OpenRead(targetFile);
+                var zipArchive = new ZipArchive(packageFileStream);
+                zipArchive.ExtractToDirectory(packageBaseDir.FullName);
+            }
 
-        _logger.Debug("Installing package {Package}", nugetPackage);
-
-        string processArgs = string.Join(" ", arguments.Select(argument => $"\"{argument}\""));
-
-        _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
-
-        var exitCode = await ProcessRunner.ExecuteProcessAsync(
-            nugetExePath,
-            arguments,
-            (message, category) => _logger.Information("{Category} {Message}", category, message),
-            (message, category) => _logger.Error("{Category} {Message}", category, message),
-            toolAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
-            verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
-            debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
-            cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-
-        if (!exitCode.IsSuccess)
-        {
-            _logger.Error(
-                "The process {Process} with arguments {Arguments} failed with exit code {ExitCode}",
-                nugetExePath,
-                arguments,
-                exitCode);
-
-            return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+            return result;
         }
 
         string searchPattern = $"{nugetPackage.NuGetPackageId.PackageId}.*";
 
         _logger.Debug(
             "Looking for directories in '{Directory}' matching pattern {Pattern}",
-            tempDirectory.Directory.FullName,
+            tempDirectory.Directory!.FullName,
             searchPattern);
 
         var packageDirectory =
@@ -904,6 +875,122 @@ public class NuGetPackageInstaller
             nugetPackage.NuGetPackageId,
             nugetPackageFileSemanticVersion,
             targetPackageDirectory);
+    }
+
+    private async Task<NuGetPackageInstallResult> DownloadPackageWithHttp(NuGetPackage nugetPackage, NugetPackageSettings nugetPackageSettings, TempDirectory tempDirectory, HttpClient? httpClient, CancellationToken cancellationToken)
+    {
+        bool clientOwned = httpClient is null;
+        httpClient ??= new();
+
+        var allVersions = await GetAllVersionsFromApiInternalAsync(nugetPackage.NuGetPackageId, nugetPackageSettings.NugetSource,
+            nugetPackageSettings.NugetConfigFile,
+            httpClient, _logger, cancellationToken);
+
+        var first = allVersions.FirstOrDefault(version =>
+             version.Package.NuGetPackageVersion.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion);
+
+        if (first is null)
+        {
+            _logger.Error("No package versions found for package id {PackageId}, version {Version}", nugetPackage.NuGetPackageId, nugetPackage.NuGetPackageVersion.SemanticVersion!.ToNormalizedString());
+            return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+        }
+
+        string tempFileName = GetDownloadFileName(nugetPackage);
+        await using var outStream = File.OpenWrite(Path.Combine(tempDirectory.Directory!.FullName, tempFileName));
+        await first.Resource.CopyNupkgToStreamAsync(nugetPackage.NuGetPackageId.PackageId,
+            NuGetVersion.Parse(nugetPackage.NuGetPackageVersion.SemanticVersion!.ToNormalizedString()), outStream, first.SourceCacheContext,
+            new SerilogNuGetAdapter(_logger), cancellationToken);
+
+        await outStream.FlushAsync(cancellationToken);
+
+        if (clientOwned)
+        {
+            httpClient.Dispose();
+        }
+
+        return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+           nugetPackage.NuGetPackageVersion.SemanticVersion, tempDirectory.Directory);
+    }
+
+    private static string GetDownloadFileName(NuGetPackage nugetPackage) => $"{nugetPackage.NuGetPackageId}.nupkg";
+
+    private async Task<NuGetPackageInstallResult> DownloadPackageWithNuGetExe(NuGetPackage nugetPackage, NugetPackageSettings nugetPackageSettings, TempDirectory tempDirectory, HttpClient? httpClient, CancellationToken cancellationToken)
+    {
+        string? nugetExePath = await GetNuGetExePathAsync(httpClient, cancellationToken)
+    .ConfigureAwait(continueOnCapturedContext: false);
+
+        var arguments = new List<string> { "install", nugetPackage.NuGetPackageId.PackageId };
+
+        if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetConfigFile))
+        {
+            if (!File.Exists(nugetPackageSettings.NugetConfigFile))
+            {
+                _logger.Error(
+                    "The specified NuGetConfig file {NuGetConfigFile} does not exist",
+                    nugetPackageSettings.NugetConfigFile);
+
+                return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+            }
+
+            arguments.Add("-ConfigFile");
+            arguments.Add(nugetPackageSettings.NugetConfigFile);
+        }
+
+        if (!string.IsNullOrWhiteSpace(nugetPackageSettings.NugetSource))
+        {
+            arguments.Add("-Source");
+            arguments.Add(nugetPackageSettings.NugetSource);
+        }
+
+        if (nugetPackage.NuGetPackageVersion.SemanticVersion != null)
+        {
+            arguments.Add("-Version");
+            arguments.Add(nugetPackage.NuGetPackageVersion.SemanticVersion.ToNormalizedString());
+        }
+
+        if (nugetPackageSettings.AllowPreRelease)
+        {
+            arguments.Add("-PreRelease");
+        }
+
+        if (_logger.IsEnabled(LogEventLevel.Debug))
+        {
+            arguments.Add("-verbosity");
+            arguments.Add("detailed");
+        }
+
+        arguments.Add("-OutputDirectory");
+        arguments.Add(tempDirectory.Directory!.FullName);
+
+        _logger.Debug("Installing package {Package}", nugetPackage);
+
+        string processArgs = string.Join(" ", arguments.Select(argument => $"\"{argument}\""));
+
+        _logger.Debug("Running process {Process} with args {Arguments}", nugetExePath, processArgs);
+
+        var exitCode = await ProcessRunner.ExecuteProcessAsync(
+            nugetExePath,
+            arguments,
+            (message, category) => _logger.Information("{Category} {Message}", category, message),
+            (message, category) => _logger.Error("{Category} {Message}", category, message),
+            toolAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
+            verboseAction: (message, category) => _logger.Verbose("{Category} {Message}", category, message),
+            debugAction: (message, category) => _logger.Debug("{Category} {Message}", category, message),
+            cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+
+        if (!exitCode.IsSuccess)
+        {
+            _logger.Error(
+                "The process {Process} with arguments {Arguments} failed with exit code {ExitCode}",
+                nugetExePath,
+                arguments,
+                exitCode);
+
+            return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
+        }
+
+        return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
+            nugetPackage.NuGetPackageVersion.SemanticVersion, tempDirectory.Directory);
     }
 
     public static DirectoryInfo? DownloadPathFromEnvironment() =>
