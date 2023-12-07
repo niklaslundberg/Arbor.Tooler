@@ -60,7 +60,7 @@
       },
       "System.IO.Packaging": {
         "type": "Direct",
-        "requested": "[*, )",
+        "requested": "[8.0.0, )",
         "resolved": "8.0.0",
         "contentHash": "8g1V4YRpdGAxFcK8v9OjuMdIOJSpF30Zb1JGicwVZhly3I994WFyBdV6mQEo8d3T+URQe55/M0U0eIH0Hts1bg=="
       },
@@ -1188,7 +1188,7 @@
           "NuGet.Protocol": "[6.8.0, )",
           "NuGet.Versioning": "[6.8.0, )",
           "Serilog": "[3.1.1, )",
-          "System.IO.Packaging": "[*, )"
+          "System.IO.Packaging": "[8.0.0, )"
         }
       },
       "Arbor.Tooler.GlobalTool": {
@@ -1196,7 +1196,7 @@
         "dependencies": {
           "Arbor.Tooler": "[1.0.0, )",
           "Serilog.Sinks.Console": "[5.0.1, )",
-          "System.IO.Packaging": "[*, )"
+          "System.IO.Packaging": "[8.0.0, )"
         }
       }
     }
