@@ -47,4 +47,4 @@ Outputs
 
 ### Download package
 
-    dotnet-arbor-tooler download -package-id=Arbor.Tooler -version=0.26.0 -outputdirectory=C:\temp -config=C:\\nuget.config -source=nuget.org --extract
+    dotnet-arbor-tooler download -package-id=Arbor.Tooler -version=0.26.0 -output-directory=C:\temp -config=C:\\nuget.config -source=nuget.org --extract
