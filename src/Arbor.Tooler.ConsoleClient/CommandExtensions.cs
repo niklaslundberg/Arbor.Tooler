@@ -13,7 +13,8 @@ internal static class CommandExtensions
     public const string Source = "-source";
     public const string Config = "-config";
     public const string Take = "-take";
-    public const string DownloadDirectory = "-outputdirectory";
+    public const string DownloadDirectoryOld = "-outputdirectory";
+    public const string DownloadDirectory = "-output-directory";
     public const string ExeVersion = "-exe-version";
     public const string Force = "--force";
     public const string Extract = "--extract";

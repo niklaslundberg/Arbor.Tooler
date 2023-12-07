@@ -111,8 +111,9 @@ public sealed class ToolerConsole : IDisposable
                      && SemanticVersion.TryParse(packageVersion, out var downloadVersion))
             {
                 var downloadDirectory =
-                    new DirectoryInfo(_args.GetCommandLineValue(CommandExtensions.DownloadDirectory) ??
-                                      Directory.GetCurrentDirectory());
+                    new DirectoryInfo(_args.GetCommandLineValue(CommandExtensions.DownloadDirectory)
+                                      ?? _args.GetCommandLineValue(CommandExtensions.DownloadDirectoryOld)
+                                      ?? Directory.GetCurrentDirectory());
 
                 string? source = _args.GetCommandLineValue(CommandExtensions.Source);
                 string? config = _args.GetCommandLineValue(CommandExtensions.Config);
@@ -131,7 +132,9 @@ public sealed class ToolerConsole : IDisposable
             }
             else
             {
-                string? downloadDirectory = _args.GetCommandLineValue(CommandExtensions.DownloadDirectory);
+                string? downloadDirectory = _args.GetCommandLineValue(CommandExtensions.DownloadDirectory)
+                                            ?? _args.GetCommandLineValue(CommandExtensions.DownloadDirectoryOld);
+
                 string? exeVersion = _args.GetCommandLineValue(CommandExtensions.ExeVersion);
 
                 bool force = _args.HashFlag(CommandExtensions.Force);
