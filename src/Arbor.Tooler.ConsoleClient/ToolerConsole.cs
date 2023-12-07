@@ -83,7 +83,7 @@ public sealed class ToolerConsole : IDisposable
             {
                 ShowUsage();
             }
-            else if (_args.Any(arg => arg.Equals(CommandExtensions.List, StringComparison.OrdinalIgnoreCase))
+            else if (_args[0].Equals(CommandExtensions.List, StringComparison.OrdinalIgnoreCase)
                      && _args.GetCommandLineValue(CommandExtensions.PackageId) is { } packageId)
             {
                 var nuGetPackageInstaller = new NuGetPackageInstaller();
@@ -93,8 +93,7 @@ public sealed class ToolerConsole : IDisposable
                 string? source = _args.GetCommandLineValue(CommandExtensions.Source);
                 string? config = _args.GetCommandLineValue(CommandExtensions.Config);
 
-                bool allowPreRelease = _args.Any(arg =>
-                    arg.Equals(CommandExtensions.AllowPreRelease, StringComparison.OrdinalIgnoreCase));
+                bool allowPreRelease = _args.HashFlag(CommandExtensions.AllowPreRelease);
 
                 var packages = await nuGetPackageInstaller.GetAllVersionsAsync(new NuGetPackageId(packageId), nuGetSource: source, nugetConfig: config, maxRows: maxRows, allowPreRelease: allowPreRelease);
 
