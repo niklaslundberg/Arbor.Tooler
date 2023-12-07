@@ -5,25 +5,19 @@ namespace Arbor.Tooler;
 
 public class NugetPackageSettings
 {
-    private static readonly Lazy<NugetPackageSettings> DefaultSettings = new(() => new NugetPackageSettings(false));
+    private static readonly Lazy<NugetPackageSettings> DefaultSettings = new();
 
-    public NugetPackageSettings(bool allowPreRelease, string? nugetSource = null, string? nugetConfigFile = null, DirectoryInfo? tempDirectory = null)
-    {
-        AllowPreRelease = allowPreRelease;
-        NugetSource = nugetSource;
-        NugetConfigFile = nugetConfigFile;
-        TempDirectory = tempDirectory;
-    }
+    public bool AllowPreRelease { get; init; }
 
-    public bool AllowPreRelease { get; }
+    public string? NugetSource { get; init; }
 
-    public string? NugetSource { get; }
+    public string? NugetConfigFile { get; init; }
 
-    public string? NugetConfigFile { get; }
-
-    public DirectoryInfo? TempDirectory { get; }
+    public DirectoryInfo? TempDirectory { get; init; }
 
     public static NugetPackageSettings Default => DefaultSettings.Value;
+    public bool UseCli { get; init; }
+    public bool Extract { get; init; }
 
     public override string ToString() => $"{nameof(AllowPreRelease)}: {AllowPreRelease}";
 }

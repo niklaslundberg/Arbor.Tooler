@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using NuGet.Versioning;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -103,13 +105,36 @@ public sealed class ToolerConsole : IDisposable
 
                 exitCode = 0;
             }
+            else if (_args[0].Equals(CommandExtensions.Download, StringComparison.OrdinalIgnoreCase)
+                     && _args.GetCommandLineValue(CommandExtensions.PackageId) is { } downloadPackageId
+                     && _args.GetCommandLineValue(CommandExtensions.PackageVersion) is { } packageVersion
+                     && SemanticVersion.TryParse(packageVersion, out var downloadVersion))
+            {
+                var downloadDirectory =
+                    new DirectoryInfo(_args.GetCommandLineValue(CommandExtensions.DownloadDirectory) ??
+                                      Directory.GetCurrentDirectory());
+
+                string? source = _args.GetCommandLineValue(CommandExtensions.Source);
+                string? config = _args.GetCommandLineValue(CommandExtensions.Config);
+                var nugetPackageSettings = new NugetPackageSettings
+                {
+                    Extract = _args.HashFlag(CommandExtensions.Extract),
+                    NugetSource = source,
+                    NugetConfigFile = config
+                };
+
+                var nuGetPackageInstaller = new NuGetPackageInstaller();
+                var nugetPackage = new NuGetPackage(new NuGetPackageId(downloadPackageId), new NuGetPackageVersion(downloadVersion));
+
+                await nuGetPackageInstaller.InstallPackageAsync(nugetPackage, installBaseDirectory: downloadDirectory, nugetPackageSettings: nugetPackageSettings);
+                exitCode = 0;
+            }
             else
             {
                 string? downloadDirectory = _args.GetCommandLineValue(CommandExtensions.DownloadDirectory);
                 string? exeVersion = _args.GetCommandLineValue(CommandExtensions.ExeVersion);
 
-                bool force = _args.Any(arg =>
-                    arg.Equals(CommandExtensions.Force, StringComparison.OrdinalIgnoreCase));
+                bool force = _args.HashFlag(CommandExtensions.Force);
 
                 if (string.IsNullOrWhiteSpace(downloadDirectory))
                 {

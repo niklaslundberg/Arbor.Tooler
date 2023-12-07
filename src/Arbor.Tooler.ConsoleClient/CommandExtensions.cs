@@ -7,14 +7,19 @@ namespace Arbor.Tooler.ConsoleClient;
 internal static class CommandExtensions
 {
     public const string List = "list";
+    public const string Download = "download";
     public const string PackageId = "-package-id";
+    public const string PackageVersion = "-version";
     public const string Source = "-source";
     public const string Config = "-config";
     public const string Take = "-take";
     public const string DownloadDirectory = "-outputdirectory";
     public const string ExeVersion = "-exe-version";
     public const string Force = "--force";
+    public const string Extract = "--extract";
     public const string AllowPreRelease = "--pre-release";
+
+    public static bool HashFlag(this string[] args, string flag) => args.Any(arg => arg.Equals(flag, StringComparison.OrdinalIgnoreCase));
 
     public static string? GetCommandLineValue(this IEnumerable<string> keys, string key)
     {
