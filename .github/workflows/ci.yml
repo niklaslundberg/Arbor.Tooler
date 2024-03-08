@@ -32,5 +32,8 @@ jobs:
         Arbor.Build.NuGet.PackageUpload.Server.Uri: "https://www.myget.org/F/arbor/api/v3/index.json"
         Arbor.Build.NuGet.PackageUpload.Enabled: "true"
         Arbor.Build.NuGet.PackageUpload.ForceUploadEnabled: "true"
+        Arbor.Build.Tools.External.SymbolServer.Enabled: "true"
+        Arbor.Build.Tools.External.SymbolServer.Uri: "https://www.myget.org/F/arbor/api/v2/package"
+        Arbor.Build.Tools.External.SymbolServer.ApiKey:  ${{ secrets.myget }}
       run: |
         build\build.bat
