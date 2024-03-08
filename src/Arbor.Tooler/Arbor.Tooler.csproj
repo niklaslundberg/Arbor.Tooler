@@ -8,6 +8,9 @@
 		<RepositoryType>git</RepositoryType>
 		<PackageProjectUrl>https://github.com/niklaslundberg/Arbor.Tooler</PackageProjectUrl>
 		<Copyright>Niklas Lundberg 2018-2024</Copyright>
+		<IncludeSymbols>True</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
