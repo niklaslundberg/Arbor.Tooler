@@ -891,7 +891,7 @@ public class NuGetPackageInstaller
 
         if (first is null)
         {
-            _logger.Error("No package versions found for package id {PackageId}, version {Version}", nugetPackage.NuGetPackageId, nugetPackage.NuGetPackageVersion.SemanticVersion!.ToNormalizedString());
+            _logger.Error("No package versions found for package id {PackageId}, version {Version}", nugetPackage.NuGetPackageId, nugetPackage.NuGetPackageVersion.SemanticVersion?.ToNormalizedString());
             return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
         }
 
