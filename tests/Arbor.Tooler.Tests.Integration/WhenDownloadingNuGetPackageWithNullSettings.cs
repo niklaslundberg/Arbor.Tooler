@@ -43,4 +43,33 @@ public class WhenDownloadingNuGetPackageWithNullSettings
 
         await Task.Delay(TimeSpan.FromSeconds(3));
     }
+
+    [Fact]
+    public async Task ItShouldHaveDownloadedTheLatestVersionOfArborBuild()
+    {
+        await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
+            .MinimumLevel
+            .Verbose()
+            .CreateLogger();
+
+        var installer = new NuGetPackageInstaller(logger: testLogger);
+
+        var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.Build"));
+        var nugetPackageSettings = new NugetPackageSettings { UseCli = false, AllowPreRelease = true};
+
+        NuGetPackageInstallResult nuGetPackageInstallResult =
+            await installer.InstallPackageAsync(nuGetPackage, nugetPackageSettings);
+
+        Assert.NotNull(nuGetPackageInstallResult);
+        Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
+
+        var minVersion = new SemanticVersion(0, 19, 0);
+        nuGetPackageInstallResult.SemanticVersion.Should().BeGreaterOrEqualTo(minVersion);
+
+        _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+        _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+        _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
+
+        await Task.Delay(TimeSpan.FromSeconds(3));
+    }
 }

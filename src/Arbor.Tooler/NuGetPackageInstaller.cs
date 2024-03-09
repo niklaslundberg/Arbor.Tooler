@@ -732,7 +732,7 @@ public class NuGetPackageInstaller
             string sourceFile = Path.Combine(tempDirectory.Directory!.FullName, fileName);
             string targetFile = Path.Combine(packageInstallBaseDirectory.FullName, fileName);
             packageInstallBaseDirectory.Create();
-            File.Copy(sourceFile,  targetFile);
+            File.Copy(sourceFile,  targetFile, overwrite: true);
 
             if (packageBaseDir.GetFiles().Length + packageBaseDir.GetDirectories().Length == 0)
             {
@@ -886,10 +886,21 @@ public class NuGetPackageInstaller
             nugetPackageSettings.NugetConfigFile,
             httpClient, _logger, cancellationToken);
 
-        var first = allVersions.FirstOrDefault(version =>
-             version.Package.NuGetPackageVersion.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion);
+        PackageFromResource? packageFromResource;
 
-        if (first is null)
+        if (nugetPackage.NuGetPackageVersion.SemanticVersion is { })
+        {
+            packageFromResource = allVersions.FirstOrDefault(version =>
+             version.Package.NuGetPackageVersion.SemanticVersion == nugetPackage.NuGetPackageVersion.SemanticVersion);
+        }
+        else
+        {
+            packageFromResource = allVersions
+                .Where(version => version.Package.NuGetPackageVersion.SemanticVersion is { })
+                .MaxBy(version => version.Package.NuGetPackageVersion.SemanticVersion);
+        }
+
+        if (packageFromResource is null)
         {
             _logger.Error("No package versions found for package id {PackageId}, version {Version}", nugetPackage.NuGetPackageId, nugetPackage.NuGetPackageVersion.SemanticVersion?.ToNormalizedString());
             return NuGetPackageInstallResult.Failed(nugetPackage.NuGetPackageId);
@@ -897,8 +908,8 @@ public class NuGetPackageInstaller
 
         string tempFileName = GetDownloadFileName(nugetPackage);
         await using var outStream = File.OpenWrite(Path.Combine(tempDirectory.Directory!.FullName, tempFileName));
-        await first.Resource.CopyNupkgToStreamAsync(nugetPackage.NuGetPackageId.PackageId,
-            NuGetVersion.Parse(nugetPackage.NuGetPackageVersion.SemanticVersion!.ToNormalizedString()), outStream, first.SourceCacheContext,
+        await packageFromResource.Resource.CopyNupkgToStreamAsync(nugetPackage.NuGetPackageId.PackageId,
+            NuGetVersion.Parse(packageFromResource.Package.NuGetPackageVersion.Version), outStream, packageFromResource.SourceCacheContext,
             new SerilogNuGetAdapter(_logger), cancellationToken);
 
         await outStream.FlushAsync(cancellationToken);
@@ -909,7 +920,7 @@ public class NuGetPackageInstaller
         }
 
         return new NuGetPackageInstallResult(nugetPackage.NuGetPackageId,
-           nugetPackage.NuGetPackageVersion.SemanticVersion, tempDirectory.Directory);
+           packageFromResource.Package.NuGetPackageVersion.SemanticVersion, tempDirectory.Directory);
     }
 
     private static string GetDownloadFileName(NuGetPackage nugetPackage) => $"{nugetPackage.NuGetPackageId}.nupkg";
