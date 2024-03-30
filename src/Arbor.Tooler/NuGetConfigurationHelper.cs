@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NuGet.Configuration;
 
 namespace Arbor.Tooler
 {
-    public class NuGetConfigurationHelper
+    public static class NuGetConfigurationHelper
     {
         public static IReadOnlyCollection<NuGetConfigTreeNode> GetUsedConfigurationFiles(string? rootPath)
         {
@@ -18,8 +19,7 @@ namespace Arbor.Tooler
                 configFileName: null,
                 new XPlatMachineWideSetting());
 
-            var rootNodes = settings.GetConfigRoots().OrderBy(s => s.Length).Select(s=> new NuGetConfigTreeNode(s)).ToArray();
-
+            var rootNodes = settings.GetConfigRoots().OrderBy(path => path.Length).Select(s => new NuGetConfigTreeNode(s)).ToArray();
 
             var nodes = new List<NuGetConfigTreeNode>();
 
@@ -38,7 +38,7 @@ namespace Arbor.Tooler
             }
 
 
-            foreach (string configFilePath in settings.GetConfigFilePaths().OrderBy(s => s.Count(a => a.Equals(Path.DirectorySeparatorChar))))
+            foreach (string configFilePath in settings.GetConfigFilePaths().OrderBy(path => path.Count(character => character.Equals(Path.DirectorySeparatorChar))))
             {
                 var node = new NuGetConfigTreeNode(configFilePath);
 
@@ -69,7 +69,23 @@ namespace Arbor.Tooler
                 node.Hops = hops;
             }
 
-            return nodes;
+            return nodes
+                .ToList();
         }
+
+        private static IReadOnlyCollection<string> GetConfigFiles(NuGetConfigTreeNode node)
+        {
+            string[] files = node.Nodes.SelectMany(GetConfigFiles).ToArray();
+
+            if (Path.HasExtension(node.Path) &&
+                Path.GetExtension(node.Path).Equals(".config", StringComparison.OrdinalIgnoreCase))
+            {
+                return [node.Path, .. files];
+            }
+
+            return files;
+        }
+
+        public static IReadOnlyCollection<string> Flatten(this IReadOnlyCollection<NuGetConfigTreeNode> nodes) => nodes.SelectMany(GetConfigFiles).ToArray();
     }
 }

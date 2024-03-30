@@ -36,9 +36,11 @@ public class GetAllPackageVersionsTests
     {
         var nuGetPackageInstaller = new NuGetPackageInstaller();
 
-        string? configFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!, "tests", "Arbor.Tooler.Tests.Integration", "DefaultConfig", "nuget.config");
+        string? configFile = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!, "tests",
+            "Arbor.Tooler.Tests.Integration", "DefaultConfig", "nuget.config");
 
-        var packageVersions = await nuGetPackageInstaller.GetAllVersions(new NuGetPackageId("Newtonsoft.Json"), nugetConfig: configFile);
+        var packageVersions =
+            await nuGetPackageInstaller.GetAllVersions(new NuGetPackageId("Newtonsoft.Json"), nugetConfig: configFile);
 
         packageVersions.Should().NotBeEmpty();
     }
@@ -49,17 +51,17 @@ public class GetAllPackageVersionsTests
 
         _testOutputHelper.WriteLine(prefix + node.Path + " " + node.Hops);
 
-        foreach (var nuGetConfigTreeNode in node.Nodes.OrderByDescending(s => s.Hops))
+        foreach (var nuGetConfigTreeNode in node.Nodes.OrderByDescending(treeNode => treeNode.Hops))
         {
             Print(nuGetConfigTreeNode, currentPath, indent + 1);
         }
-
     }
 
     [Fact]
     public async Task GetConfigurationFiles()
     {
-        string? currentPath = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!, "tests", "Arbor.Tooler.Tests.Integration", "DefaultConfig");
+        string? currentPath = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!, "tests",
+            "Arbor.Tooler.Tests.Integration", "DefaultConfig");
         var configurationFiles =
             NuGetConfigurationHelper.GetUsedConfigurationFiles(currentPath);
 
@@ -67,7 +69,12 @@ public class GetAllPackageVersionsTests
 
         foreach (var configurationFile in configurationFiles)
         {
-            Print(configurationFile, currentPath);
+            //Print(configurationFile, currentPath);
+        }
+
+        foreach (string file in configurationFiles.Flatten())
+        {
+            _testOutputHelper.WriteLine(file);
         }
     }
 }
