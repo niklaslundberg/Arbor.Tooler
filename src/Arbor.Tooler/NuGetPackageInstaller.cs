@@ -753,7 +753,18 @@ public class NuGetPackageInstaller
                 {
                     targetDirectory = installBaseDirectory;
                 }
-                zipArchive.ExtractToDirectory(targetDirectory.FullName);
+
+                foreach (var file in targetDirectory.GetFiles().Where(file => file.Extension != ".nupkg" && file.Extension!= ".snupkg"))
+                {
+                    file.Delete();
+                }
+
+                foreach (var directoryInfo in targetDirectory.GetDirectories())
+                {
+                    directoryInfo.Delete(recursive: true);
+                }
+
+                zipArchive.ExtractToDirectory(targetDirectory.FullName, overwriteFiles: true);
             }
 
             return result with { PackageDirectory = targetDirectory };
