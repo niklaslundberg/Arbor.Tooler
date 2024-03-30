@@ -728,23 +728,35 @@ public class NuGetPackageInstaller
 
             string fileName = GetDownloadFileName(nugetPackage);
             string sourceFile = Path.Combine(tempDirectory.Directory!.FullName, fileName);
-            string targetFile = Path.Combine(packageInstallBaseDirectory.FullName, fileName);
-            packageInstallBaseDirectory.Create();
-            File.Copy(sourceFile,  targetFile, overwrite: true);
+
+            string targetFile =
+                installBaseDirectory is { }
+                    ? Path.Combine(installBaseDirectory.FullName, fileName)
+                    : Path.Combine(packageBaseDir.FullName, result.SemanticVersion!.ToNormalizedString(), fileName);
+
+            var targetFileInfo = new FileInfo(targetFile);
+            targetFileInfo.Directory!.Create();
+            File.Copy(sourceFile, targetFile, overwrite: true);
 
             if (packageBaseDir.GetFiles().Length + packageBaseDir.GetDirectories().Length == 0)
             {
                 packageBaseDir.Delete();
             }
 
+            DirectoryInfo targetDirectory = targetFileInfo.Directory;
+
             if (nugetPackageSettings.Extract)
             {
                 await using var packageFileStream = File.OpenRead(targetFile);
                 var zipArchive = new ZipArchive(packageFileStream);
-                zipArchive.ExtractToDirectory(packageBaseDir.FullName);
+                if (installBaseDirectory is { })
+                {
+                    targetDirectory = installBaseDirectory;
+                }
+                zipArchive.ExtractToDirectory(targetDirectory.FullName);
             }
 
-            return result with { PackageDirectory = packageBaseDir };
+            return result with { PackageDirectory = targetDirectory };
         }
 
         string searchPattern = $"{nugetPackage.NuGetPackageId.PackageId}.*";

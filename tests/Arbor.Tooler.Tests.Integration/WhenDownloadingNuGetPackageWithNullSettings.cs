@@ -72,6 +72,7 @@ public class WhenDownloadingNuGetPackageWithNullSettings
 
         nuGetPackageInstallResult.PackageDirectory.Should().NotBeNull();
         nuGetPackageInstallResult.PackageDirectory!.Exists.Should().BeTrue();
+        nuGetPackageInstallResult.PackageDirectory.GetFiles("Arbor.Build.nupkg").Should().ContainSingle();
 
         await Task.Delay(TimeSpan.FromSeconds(3));
     }

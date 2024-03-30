@@ -43,7 +43,7 @@ public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : I
     }
 
     [Fact]
-    public async Task RunWithExtract()
+    public async Task RunWithExtractSpecificTargetDirectory()
     {
         using var tempDirectory = TempDirectory.CreateTempDirectory();
 
