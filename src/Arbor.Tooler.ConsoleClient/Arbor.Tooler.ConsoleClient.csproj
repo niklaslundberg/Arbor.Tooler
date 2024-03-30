@@ -7,6 +7,7 @@
     <PackageId>Arbor.Tooler.GlobalTool</PackageId>
     <AssemblyName>dotnet-arbor-tooler</AssemblyName>
     <LangVersion>latest</LangVersion>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
