@@ -21,8 +21,6 @@ using ILogger = Serilog.ILogger;
 
 namespace Arbor.Tooler;
 
-public record PackageFromResource(NuGetPackage Package, FindPackageByIdResource Resource, SourceCacheContext SourceCacheContext);
-
 public class NuGetPackageInstaller
 {
     private const string DefaultPrefixPackageId = "packageid:";
@@ -746,7 +744,7 @@ public class NuGetPackageInstaller
                 zipArchive.ExtractToDirectory(packageBaseDir.FullName);
             }
 
-            return result;
+            return result with { PackageDirectory = packageBaseDir };
         }
 
         string searchPattern = $"{nugetPackage.NuGetPackageId.PackageId}.*";

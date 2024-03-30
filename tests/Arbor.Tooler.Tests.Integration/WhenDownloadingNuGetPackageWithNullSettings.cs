@@ -70,6 +70,9 @@ public class WhenDownloadingNuGetPackageWithNullSettings
         _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
         _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
+        nuGetPackageInstallResult.PackageDirectory.Should().NotBeNull();
+        nuGetPackageInstallResult.PackageDirectory!.Exists.Should().BeTrue();
+
         await Task.Delay(TimeSpan.FromSeconds(3));
     }
 }
