@@ -40,12 +40,10 @@ public class WhenDownloadingNuGetPackageWithNullSettings
         _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
         _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
         _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
-
-        await Task.Delay(TimeSpan.FromSeconds(3));
     }
 
     [Fact]
-    public async Task ItShouldHaveDownloadedTheLatestVersionOfArborBuild()
+    public async Task ItShouldHaveDownloadedTheLatestVersionOfArborTooler()
     {
         await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
             .MinimumLevel
@@ -54,7 +52,7 @@ public class WhenDownloadingNuGetPackageWithNullSettings
 
         var installer = new NuGetPackageInstaller(logger: testLogger);
 
-        var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.Build"));
+        var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.Tooler"));
         var nugetPackageSettings = new NugetPackageSettings { UseCli = false, AllowPreRelease = true};
 
         NuGetPackageInstallResult nuGetPackageInstallResult =
@@ -72,8 +70,6 @@ public class WhenDownloadingNuGetPackageWithNullSettings
 
         nuGetPackageInstallResult.PackageDirectory.Should().NotBeNull();
         nuGetPackageInstallResult.PackageDirectory!.Exists.Should().BeTrue();
-        nuGetPackageInstallResult.PackageDirectory.GetFiles("Arbor.Build.nupkg").Should().ContainSingle();
-
-        await Task.Delay(TimeSpan.FromSeconds(3));
+        nuGetPackageInstallResult.PackageDirectory.GetFiles("Arbor.Tooler.nupkg").Should().ContainSingle();
     }
 }
