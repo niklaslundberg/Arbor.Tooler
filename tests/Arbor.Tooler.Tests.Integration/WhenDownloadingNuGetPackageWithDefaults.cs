@@ -37,24 +37,14 @@ public class WhenDownloadingNuGetPackageWithDefaults
 
         const string nugetSource = "LocalToolerTest";
 
-        var nugetCliSettings = new NuGetCliSettings(nugetSourceName: nugetSource,
-            nugetConfigFile: nugetConfigFile);
-
-        var nugetDownloadClient = new NuGetDownloadClient();
-
-        var installer =
-            new NuGetPackageInstaller(nugetDownloadClient,
-                nugetCliSettings,
-                nugetDownloadSettings,
-                logger);
-
+        var installer = new NuGetPackageInstaller();
         var nuGetPackage = new NuGetPackage(new NuGetPackageId("MyTestPackage"),
             NuGetPackageVersion.LatestAvailable);
         var nugetPackageSettings = new NugetPackageSettings
         {
             NugetSource = nugetSource,
             NugetConfigFile = nugetConfigFile,
-            UseCli = true
+            UseCli = false
         };
 
         DirectoryInfo? installBaseDirectory = packagesTempDir.Directory;

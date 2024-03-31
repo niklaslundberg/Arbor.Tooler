@@ -89,11 +89,6 @@ public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : I
     {
         using var tempDirectory = TempDirectory.CreateTempDirectory();
 
-        string directory = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!,
-            "tests",
-            "Arbor.Tooler.Tests.Integration",
-            "DefaultConfig");
-
         string[] args = ["config", "list"];
         using var toolerConsole = ToolerConsole.Create(args, _logger);
         int exitCode = await toolerConsole.RunAsync();
