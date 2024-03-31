@@ -8,6 +8,11 @@
     <AssemblyName>dotnet-arbor-tooler</AssemblyName>
     <LangVersion>latest</LangVersion>
     <IncludeSymbols>False</IncludeSymbols>
+    <RepositoryUrl>https://github.com/niklaslundberg/Arbor.Tooler</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/niklaslundberg/Arbor.Tooler</PackageProjectUrl>
+    <Copyright>Niklas Lundberg 2018-2024</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
