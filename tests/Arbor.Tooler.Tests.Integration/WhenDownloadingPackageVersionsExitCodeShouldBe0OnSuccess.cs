@@ -43,7 +43,7 @@ public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : I
     }
 
     [Fact]
-    public async Task RunWithExtract()
+    public async Task RunWithExtractSpecificTargetDirectory()
     {
         using var tempDirectory = TempDirectory.CreateTempDirectory();
 
@@ -65,6 +65,35 @@ public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : I
         int totalItems = files.Length + directories.Length;
 
         totalItems.Should().BeGreaterThan(1);
+    }
+
+    [Fact]
+    public async Task ListConfigFiles()
+    {
+        using var tempDirectory = TempDirectory.CreateTempDirectory();
+
+        string directory = Path.Combine(VcsTestPathHelper.TryFindVcsRootPath()!,
+            "tests",
+            "Arbor.Tooler.Tests.Integration",
+            "DefaultConfig");
+
+        string[] args = ["config", "list", $"--directory={directory}"];
+        using var toolerConsole = ToolerConsole.Create(args, _logger);
+        int exitCode = await toolerConsole.RunAsync();
+
+        exitCode.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ListConfigFilesCurrentDirectory()
+    {
+        using var tempDirectory = TempDirectory.CreateTempDirectory();
+
+        string[] args = ["config", "list"];
+        using var toolerConsole = ToolerConsole.Create(args, _logger);
+        int exitCode = await toolerConsole.RunAsync();
+
+        exitCode.Should().Be(0);
     }
 
     public void Dispose() => _logger.Dispose();

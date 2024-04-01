@@ -12,6 +12,7 @@ internal static class CommandExtensions
     public const string PackageVersion = "-version";
     public const string Source = "-source";
     public const string Config = "-config";
+    public const string ListConfig = "config";
     public const string Take = "-take";
     public const string DownloadDirectoryOld = "-outputdirectory";
     public const string DownloadDirectory = "-output-directory";

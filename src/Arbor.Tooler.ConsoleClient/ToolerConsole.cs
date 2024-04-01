@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Arbor.Processing;
 using NuGet.Versioning;
 using Serilog;
 using Serilog.Core;
@@ -128,6 +129,19 @@ public sealed class ToolerConsole : IDisposable
 
                 await nuGetPackageInstaller.InstallPackageAsync(nugetPackage, installBaseDirectory: downloadDirectory, nugetPackageSettings: nugetPackageSettings);
                 exitCode = 0;
+            }
+            else if (_args is [{ }, { }, ..] && _args[0].Equals(CommandExtensions.ListConfig,
+                                             StringComparison.OrdinalIgnoreCase)
+                                         && _args[1].Equals(CommandExtensions.List, StringComparison.OrdinalIgnoreCase))
+            {
+                var directory = _args.Length > 2 ? _args[2] : Directory.GetCurrentDirectory();
+                var files = NuGetConfigurationHelper.GetUsedConfigurationFiles(directory).Flatten();
+                foreach (string file in files)
+                {
+                    Logger.Information("{File}", file);
+                }
+
+                return ExitCode.Success;
             }
             else
             {

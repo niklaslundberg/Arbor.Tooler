@@ -2,11 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <PackAsTool>true</PackAsTool>
     <PackageId>Arbor.Tooler.GlobalTool</PackageId>
     <AssemblyName>dotnet-arbor-tooler</AssemblyName>
     <LangVersion>latest</LangVersion>
+    <IncludeSymbols>False</IncludeSymbols>
+    <RepositoryUrl>https://github.com/niklaslundberg/Arbor.Tooler</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/niklaslundberg/Arbor.Tooler</PackageProjectUrl>
+    <Copyright>Niklas Lundberg 2018-2024</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

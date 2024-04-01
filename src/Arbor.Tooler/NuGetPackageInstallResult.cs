@@ -5,25 +5,11 @@ using NuGet.Versioning;
 
 namespace Arbor.Tooler;
 
-public class NuGetPackageInstallResult
+public record NuGetPackageInstallResult(
+        NuGetPackageId NuGetPackageId,
+        SemanticVersion? SemanticVersion,
+        DirectoryInfo? PackageDirectory)
 {
-    public NuGetPackageInstallResult(
-        [NotNull] NuGetPackageId nugetPackageNuGetPackageId,
-        SemanticVersion? semanticVersion,
-        DirectoryInfo? packageDirectory)
-    {
-        NuGetPackageId = nugetPackageNuGetPackageId ??
-                         throw new ArgumentNullException(nameof(nugetPackageNuGetPackageId));
-        SemanticVersion = semanticVersion;
-        PackageDirectory = packageDirectory;
-    }
-
-    public NuGetPackageId NuGetPackageId { get; }
-
-    public SemanticVersion? SemanticVersion { get; }
-
-    public DirectoryInfo? PackageDirectory { get; }
-
     public static NuGetPackageInstallResult Failed([NotNull] NuGetPackageId nugetPackageId)
     {
         if (nugetPackageId == null)
