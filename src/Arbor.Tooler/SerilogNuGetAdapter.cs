@@ -4,29 +4,25 @@ using Serilog.Events;
 
 namespace Arbor.Tooler;
 
-internal class SerilogNuGetAdapter : ILogger
+internal class SerilogNuGetAdapter(Serilog.ILogger logger) : ILogger
 {
-    private readonly Serilog.ILogger _logger;
+    public void LogDebug(string data) => logger.Debug("{NuGetMessage}", data);
 
-    public SerilogNuGetAdapter(Serilog.ILogger logger) => _logger = logger;
+    public void LogVerbose(string data) => logger.Verbose("{NuGetMessage}", data);
 
-    public void LogDebug(string data) => _logger.Debug("{NuGetMessage}", data);
+    public void LogInformation(string data) => logger.Information("{NuGetMessage}", data);
 
-    public void LogVerbose(string data) => _logger.Verbose("{NuGetMessage}", data);
+    public void LogMinimal(string data) => logger.Information("{NuGetMessage}", data);
 
-    public void LogInformation(string data) => _logger.Information("{NuGetMessage}", data);
+    public void LogWarning(string data) => logger.Warning("{NuGetMessage}", data);
 
-    public void LogMinimal(string data) => _logger.Information("{NuGetMessage}", data);
+    public void LogError(string data) => logger.Error("{NuGetMessage}", data);
 
-    public void LogWarning(string data) => _logger.Warning("{NuGetMessage}", data);
+    public void LogInformationSummary(string data) => logger.Information("{NuGetMessage}", data);
 
-    public void LogError(string data) => _logger.Error("{NuGetMessage}", data);
+    public void Log(ILogMessage message) => logger.Information("{NuGetMessage}", message.FormatWithCode());
 
-    public void LogInformationSummary(string data) => _logger.Information("{NuGetMessage}", data);
-
-    public void Log(ILogMessage message) => _logger.Information("{NuGetMessage}", message.FormatWithCode());
-
-    public void Log(LogLevel level, string data) => _logger.Write(GetLevel(level), "{NuGetMessage}", data);
+    public void Log(LogLevel level, string data) => logger.Write(GetLevel(level), "{NuGetMessage}", data);
 
     public Task LogAsync(ILogMessage message)
     {
@@ -36,7 +32,7 @@ internal class SerilogNuGetAdapter : ILogger
 
     public Task LogAsync(LogLevel level, string data)
     {
-        _logger.Write(GetLevel(level), "{NuGetMessage}", data);
+        logger.Write(GetLevel(level), "{NuGetMessage}", data);
         return Task.CompletedTask;
     }
 

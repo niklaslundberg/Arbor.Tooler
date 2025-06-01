@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using JetBrains.Annotations;
 using NuGet.Versioning;
 
 namespace Arbor.Tooler;
@@ -10,7 +9,7 @@ public record NuGetPackageInstallResult(
         SemanticVersion? SemanticVersion,
         DirectoryInfo? PackageDirectory)
 {
-    public static NuGetPackageInstallResult Failed([NotNull] NuGetPackageId nugetPackageId)
+    public static NuGetPackageInstallResult Failed(NuGetPackageId nugetPackageId)
     {
         if (nugetPackageId == null)
         {

@@ -5,22 +5,19 @@ using System.Threading.Tasks;
 
 namespace Arbor.Tooler.Tests.Integration;
 
-internal class LogStringWriter : StringWriter
+internal class LogStringWriter(Action<string?>? logAction) : StringWriter
 {
     private readonly List<string> _buffer = new();
-    private readonly Action<string?>? _logAction;
-
-    public LogStringWriter(Action<string?>? logAction) => _logAction = logAction;
 
     private void DoFlush()
     {
         if (_buffer.Count > 0)
         {
-            _logAction?.Invoke(string.Concat(_buffer));
+            logAction?.Invoke(string.Concat(_buffer));
         }
     }
 
-    public override void WriteLine(string? value) => _logAction?.Invoke(value);
+    public override void WriteLine(string? value) => logAction?.Invoke(value);
 
     public override void Write(string? format, params object?[] arg)
     {
@@ -29,7 +26,7 @@ internal class LogStringWriter : StringWriter
             return;
         }
 
-        _logAction?.Invoke(string.Format(format, arg));
+        logAction?.Invoke(string.Format(format, arg));
     }
 
     public override void Write(string? value)
@@ -41,7 +38,7 @@ internal class LogStringWriter : StringWriter
 
         if (value.Contains(Environment.NewLine))
         {
-            _logAction?.Invoke(string.Concat(_buffer) + value);
+            logAction?.Invoke(string.Concat(_buffer) + value);
         }
         else
         {

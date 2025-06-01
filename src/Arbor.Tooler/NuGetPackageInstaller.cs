@@ -21,27 +21,19 @@ using ILogger = Serilog.ILogger;
 
 namespace Arbor.Tooler;
 
-public class NuGetPackageInstaller
+public class NuGetPackageInstaller(
+    NuGetDownloadClient? nugetDownloadClient = null,
+    NuGetCliSettings? nugetCliSettings = null,
+    NuGetDownloadSettings? nugetDownloadSettings = null,
+    ILogger? logger = null)
 {
     private const string DefaultPrefixPackageId = "packageid:";
-    private readonly ILogger _logger;
-    private readonly NuGetCliSettings _nugetCliSettings;
-    private readonly NuGetDownloadClient _nugetDownloadClient;
-    private readonly NuGetDownloadSettings _nugetDownloadSettings;
+    private readonly ILogger _logger = logger ?? Logger.None;
+    private readonly NuGetCliSettings _nugetCliSettings = nugetCliSettings ?? NuGetCliSettings.Default;
+    private readonly NuGetDownloadClient _nugetDownloadClient = nugetDownloadClient ?? new NuGetDownloadClient();
+    private readonly NuGetDownloadSettings _nugetDownloadSettings = nugetDownloadSettings ?? NuGetDownloadSettings.Default;
 
     private readonly ConcurrentDictionary<string, string> _sourcePrefixes = new();
-
-    public NuGetPackageInstaller(
-        NuGetDownloadClient? nugetDownloadClient = null,
-        NuGetCliSettings? nugetCliSettings = null,
-        NuGetDownloadSettings? nugetDownloadSettings = null,
-        ILogger? logger = null)
-    {
-        _nugetCliSettings = nugetCliSettings ?? NuGetCliSettings.Default;
-        _nugetDownloadClient = nugetDownloadClient ?? new NuGetDownloadClient();
-        _nugetDownloadSettings = nugetDownloadSettings ?? NuGetDownloadSettings.Default;
-        _logger = logger ?? Logger.None;
-    }
 
     public async Task<SemanticVersion?> GetLatestVersionAsync(
         NuGetPackageId packageId,
@@ -754,7 +746,7 @@ public class NuGetPackageInstaller
                     targetDirectory = installBaseDirectory;
                 }
 
-                foreach (var file in targetDirectory.GetFiles().Where(file => file.Extension != ".nupkg" && file.Extension!= ".snupkg"))
+                foreach (var file in targetDirectory.GetFiles().Where(file => file.Extension != ".nupkg" && file.Extension != ".snupkg"))
                 {
                     file.Delete();
                 }

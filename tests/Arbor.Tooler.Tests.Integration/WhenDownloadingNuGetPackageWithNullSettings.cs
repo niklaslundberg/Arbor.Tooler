@@ -1,6 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using FluentAssertions;
+﻿using System.Threading.Tasks;
+using AwesomeAssertions;
 using NuGet.Versioning;
 using Serilog;
 using Serilog.Core;
@@ -9,16 +8,12 @@ using Xunit.Abstractions;
 
 namespace Arbor.Tooler.Tests.Integration;
 
-public class WhenDownloadingNuGetPackageWithNullSettings
+public class WhenDownloadingNuGetPackageWithNullSettings(ITestOutputHelper output)
 {
-    public WhenDownloadingNuGetPackageWithNullSettings(ITestOutputHelper output) => _output = output;
-
-    private readonly ITestOutputHelper _output;
-
     [Fact]
     public async Task ItShouldHaveDownloadedTheLatestVersion()
     {
-        await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
+        await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(output.WriteLine)
             .MinimumLevel
             .Verbose()
             .CreateLogger();
@@ -35,17 +30,17 @@ public class WhenDownloadingNuGetPackageWithNullSettings
         Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
 
         var minVersion = new SemanticVersion(0, 19, 0);
-        nuGetPackageInstallResult.SemanticVersion.Should().BeGreaterOrEqualTo(minVersion);
+        nuGetPackageInstallResult.SemanticVersion.Should().BeGreaterThanOrEqualTo(minVersion);
 
-        _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
-        _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
-        _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
+        output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+        output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+        output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
     }
 
     [Fact]
     public async Task ItShouldHaveDownloadedTheLatestVersionOfArborTooler()
     {
-        await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(_output.WriteLine)
+        await using Logger testLogger = new LoggerConfiguration().WriteTo.Debug().WriteTo.MySink(output.WriteLine)
             .MinimumLevel
             .Verbose()
             .CreateLogger();
@@ -53,7 +48,7 @@ public class WhenDownloadingNuGetPackageWithNullSettings
         var installer = new NuGetPackageInstaller(logger: testLogger);
 
         var nuGetPackage = new NuGetPackage(new NuGetPackageId("Arbor.Tooler"));
-        var nugetPackageSettings = new NugetPackageSettings { UseCli = false, AllowPreRelease = true};
+        var nugetPackageSettings = new NugetPackageSettings { UseCli = false, AllowPreRelease = true };
 
         NuGetPackageInstallResult nuGetPackageInstallResult =
             await installer.InstallPackageAsync(nuGetPackage, nugetPackageSettings);
@@ -62,11 +57,11 @@ public class WhenDownloadingNuGetPackageWithNullSettings
         Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
 
         var minVersion = new SemanticVersion(0, 19, 0);
-        nuGetPackageInstallResult.SemanticVersion.Should().BeGreaterOrEqualTo(minVersion);
+        nuGetPackageInstallResult.SemanticVersion.Should().BeGreaterThanOrEqualTo(minVersion);
 
-        _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
-        _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
-        _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
+        output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+        output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+        output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
         nuGetPackageInstallResult.PackageDirectory.Should().NotBeNull();
         nuGetPackageInstallResult.PackageDirectory!.Exists.Should().BeTrue();

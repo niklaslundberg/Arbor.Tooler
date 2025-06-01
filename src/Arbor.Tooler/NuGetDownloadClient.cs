@@ -7,7 +7,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Arbor.Processing;
-using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NuGet.Versioning;
 using Serilog;
@@ -305,7 +304,7 @@ public class NuGetDownloadClient
 
     public Task<NuGetDownloadResult> DownloadNuGetAsync(
         NuGetDownloadSettings nuGetDownloadSettings,
-        [NotNull] ILogger logger,
+         ILogger logger,
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default)
     {
@@ -323,7 +322,7 @@ public class NuGetDownloadClient
     }
     public async Task<NuGetDownloadResult> DownloadNuGetInternalAsync(
         NuGetDownloadSettings nuGetDownloadSettings,
-        [NotNull] ILogger logger,
+         ILogger logger,
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default)
     {

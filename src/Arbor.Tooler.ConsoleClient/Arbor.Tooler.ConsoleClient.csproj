@@ -11,7 +11,7 @@
     <RepositoryUrl>https://github.com/niklaslundberg/Arbor.Tooler</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/niklaslundberg/Arbor.Tooler</PackageProjectUrl>
-    <Copyright>Niklas Lundberg 2018-2024</Copyright>
+    <Copyright>Niklas Lundberg 2018-2025</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
@@ -21,7 +21,8 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="System.IO.Packaging" Version="9.0.0" />
+    <PackageReference Include="System.Formats.Asn1" Version="9.0.5" />
+    <PackageReference Include="System.IO.Packaging" Version="9.0.5" />
   </ItemGroup>
 
   <ItemGroup>

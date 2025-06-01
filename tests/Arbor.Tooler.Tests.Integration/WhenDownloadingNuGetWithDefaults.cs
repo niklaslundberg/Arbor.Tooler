@@ -9,12 +9,8 @@ using Xunit.Abstractions;
 
 namespace Arbor.Tooler.Tests.Integration;
 
-public class WhenDownloadingNuGetWithDefaults
+public class WhenDownloadingNuGetWithDefaults(ITestOutputHelper output)
 {
-    public WhenDownloadingNuGetWithDefaults(ITestOutputHelper output) => _output = output;
-
-    private readonly ITestOutputHelper _output;
-
     [Fact]
     public async Task ThenItShouldDownloadTheNuGetExeSuccessfully()
     {
@@ -25,10 +21,10 @@ public class WhenDownloadingNuGetWithDefaults
         var nuGetDownloadSettings =
             new NuGetDownloadSettings(downloadDirectory: tempDirectory.Directory!.FullName);
 
-        await using var logWriter = new LogStringWriter(_output.WriteLine);
+        await using var logWriter = new LogStringWriter(output.WriteLine);
         Console.SetOut(logWriter);
 
-        await using Logger logger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine)
+        await using Logger logger = new LoggerConfiguration().WriteTo.MySink(output.WriteLine)
             .MinimumLevel.Verbose()
             .CreateLogger();
 
@@ -39,7 +35,7 @@ public class WhenDownloadingNuGetWithDefaults
                 httpClient,
                 CancellationToken.None);
 
-        _output.WriteLine(nuGetDownloadResult.Result);
+        output.WriteLine(nuGetDownloadResult.Result);
 
         Assert.True(nuGetDownloadResult.Succeeded);
     }

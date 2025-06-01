@@ -2,7 +2,13 @@
 
 namespace Arbor.Tooler;
 
-public class NuGetDownloadSettings
+public class NuGetDownloadSettings(
+    bool? nugetDownloadEnabled = null,
+    string? nugetExeVersion = null,
+    string? nugetDownloadUriFormat = null,
+    string? downloadDirectory = null,
+    bool? updateEnabled = null,
+    bool force = false)
 {
     public const bool DefaultNugetExeDownloadEnabled = true;
 
@@ -13,32 +19,16 @@ public class NuGetDownloadSettings
 
     private static readonly Lazy<NuGetDownloadSettings> DefaultSettings = new(() => new NuGetDownloadSettings());
 
-    public NuGetDownloadSettings(
-        bool? nugetDownloadEnabled = null,
-        string? nugetExeVersion = null,
-        string? nugetDownloadUriFormat = null,
-        string? downloadDirectory = null,
-        bool? updateEnabled = null,
-        bool force = false)
-    {
-        NugetDownloadUriFormat = nugetDownloadUriFormat.WithDefault(DefaultNuGetExeDownloadUriFormat);
-        DownloadDirectory = downloadDirectory;
-        Force = force;
-        UpdateEnabled = updateEnabled ?? false;
-        NugetDownloadEnabled = nugetDownloadEnabled ?? DefaultNugetExeDownloadEnabled;
-        NugetExeVersion = nugetExeVersion.WithDefault(DefaultNuGetExeVersion);
-    }
+    public string? NugetDownloadUriFormat { get; } = nugetDownloadUriFormat.WithDefault(DefaultNuGetExeDownloadUriFormat);
 
-    public string? NugetDownloadUriFormat { get; }
+    public string? DownloadDirectory { get; } = downloadDirectory;
+    public bool Force { get; } = force;
 
-    public string? DownloadDirectory { get; }
-    public bool Force { get; }
+    public bool UpdateEnabled { get; } = updateEnabled ?? false;
 
-    public bool UpdateEnabled { get; }
+    public bool NugetDownloadEnabled { get; } = nugetDownloadEnabled ?? DefaultNugetExeDownloadEnabled;
 
-    public bool NugetDownloadEnabled { get; }
-
-    public string? NugetExeVersion { get; }
+    public string? NugetExeVersion { get; } = nugetExeVersion.WithDefault(DefaultNuGetExeVersion);
 
     public static NuGetDownloadSettings Default => DefaultSettings.Value;
 
