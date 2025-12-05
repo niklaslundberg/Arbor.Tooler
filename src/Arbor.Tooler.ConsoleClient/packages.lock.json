@@ -11,12 +11,6 @@
           "Serilog": "4.0.0"
         }
       },
-      "System.Formats.Asn1": {
-        "type": "Direct",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "0QCZNYeRswlUVyo9N3hXrt5X9dqqRup53loU4K4JatdoYPhXHLrK9PwRtg5vP0Sr9QbdCOKk2luEdip/kV5Sig=="
-      },
       "System.IO.Packaging": {
         "type": "Direct",
         "requested": "[10.0.0, )",
