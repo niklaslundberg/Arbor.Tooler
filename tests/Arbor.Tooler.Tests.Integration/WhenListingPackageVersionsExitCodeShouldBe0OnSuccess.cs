@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Arbor.Aesculus.NCrunch;
 using Arbor.Tooler.ConsoleClient;
-using FluentAssertions;
+using AwesomeAssertions;
 using Serilog;
 using Serilog.Core;
 using Xunit;
@@ -11,14 +11,13 @@ using Xunit.Abstractions;
 
 namespace Arbor.Tooler.Tests.Integration;
 
-public sealed class WhenListingPackageVersionsExitCodeShouldBe0OnSuccess : IDisposable
+public sealed class WhenListingPackageVersionsExitCodeShouldBe0OnSuccess(ITestOutputHelper testOutputHelper)
+    : IDisposable
 {
-    private readonly Logger _logger;
-
-    public WhenListingPackageVersionsExitCodeShouldBe0OnSuccess(ITestOutputHelper testOutputHelper) => _logger = new LoggerConfiguration()
-       .WriteTo.TestOutput(testOutputHelper, outputTemplate: ToolerConsole.OutputTemplate)
-       .MinimumLevel.Debug()
-       .CreateLogger();
+    private readonly Logger _logger = new LoggerConfiguration()
+        .WriteTo.TestOutput(testOutputHelper, outputTemplate: ToolerConsole.OutputTemplate)
+        .MinimumLevel.Debug()
+        .CreateLogger();
 
     [Fact]
     public async Task Run()

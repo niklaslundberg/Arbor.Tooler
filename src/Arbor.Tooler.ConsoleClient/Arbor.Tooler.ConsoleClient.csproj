@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <PackAsTool>true</PackAsTool>
     <PackageId>Arbor.Tooler.GlobalTool</PackageId>
     <AssemblyName>dotnet-arbor-tooler</AssemblyName>
@@ -11,7 +11,7 @@
     <RepositoryUrl>https://github.com/niklaslundberg/Arbor.Tooler</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/niklaslundberg/Arbor.Tooler</PackageProjectUrl>
-    <Copyright>Niklas Lundberg 2018-2024</Copyright>
+    <Copyright>Niklas Lundberg 2018-2025</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="System.IO.Packaging" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="System.IO.Packaging" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>

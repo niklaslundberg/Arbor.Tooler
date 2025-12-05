@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Arbor.Aesculus.NCrunch;
 using Arbor.Tooler.ConsoleClient;
-using FluentAssertions;
+using AwesomeAssertions;
 using Serilog;
 using Serilog.Core;
 using Xunit;
@@ -12,15 +11,13 @@ using Xunit.Abstractions;
 
 namespace Arbor.Tooler.Tests.Integration;
 
-public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : IDisposable
+public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess(ITestOutputHelper testOutputHelper)
+    : IDisposable
 {
-    private readonly Logger _logger;
-
-    public WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess(ITestOutputHelper testOutputHelper) =>
-        _logger = new LoggerConfiguration()
-            .WriteTo.TestOutput(testOutputHelper, outputTemplate: ToolerConsole.OutputTemplate)
-            .MinimumLevel.Debug()
-            .CreateLogger();
+    private readonly Logger _logger = new LoggerConfiguration()
+        .WriteTo.TestOutput(testOutputHelper, outputTemplate: ToolerConsole.OutputTemplate)
+        .MinimumLevel.Debug()
+        .CreateLogger();
 
     [Fact]
     public async Task Run()
@@ -33,7 +30,7 @@ public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : I
             "DefaultConfig",
             "nuget.config");
 
-        string[] args = { "download", "-package-id=Arbor.Tooler","-version=0.26.0", $"-output-directory={tempDirectory.Directory!.FullName}", $"-configFile={nugetConfigFile}" };
+        string[] args = { "download", "-package-id=Arbor.Tooler", "-version=0.26.0", $"-output-directory={tempDirectory.Directory!.FullName}", $"-configFile={nugetConfigFile}" };
         using var toolerConsole = ToolerConsole.Create(args, _logger);
         int exitCode = await toolerConsole.RunAsync();
 
@@ -53,7 +50,7 @@ public sealed class WhenDownloadingPackageVersionsExitCodeShouldBe0OnSuccess : I
             "DefaultConfig",
             "nuget.config");
 
-        string[] args = { "download", "-package-id=Arbor.Tooler","-version=0.26.0", $"-output-directory={tempDirectory.Directory!.FullName}", $"-configFile={nugetConfigFile}", "--extract" };
+        string[] args = { "download", "-package-id=Arbor.Tooler", "-version=0.26.0", $"-output-directory={tempDirectory.Directory!.FullName}", $"-configFile={nugetConfigFile}", "--extract" };
         using var toolerConsole = ToolerConsole.Create(args, _logger);
         int exitCode = await toolerConsole.RunAsync();
 

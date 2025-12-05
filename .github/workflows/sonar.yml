@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: windows-2022
+    runs-on: windows-2025
 
     steps:
     - uses: actions/checkout@v4
@@ -21,22 +21,18 @@ jobs:
         distribution: 'microsoft'
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-            8.0.x
-    - uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
         cache: true
         cache-dependency-path: tests/Arbor.Tooler.Tests.Integration
     - name: Cache SonarCloud packages
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~\sonar\cache
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
     - name: Cache SonarCloud scanner
       id: cache-sonar-scanner
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: .\.sonar\scanner
         key: ${{ runner.os }}-sonar-scanner

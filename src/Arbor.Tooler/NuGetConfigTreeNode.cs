@@ -2,16 +2,11 @@
 
 namespace Arbor.Tooler;
 
-public class NuGetConfigTreeNode
+public class NuGetConfigTreeNode(string path)
 {
-    public string Path { get; }
+    public string Path { get; } = path;
 
     public List<NuGetConfigTreeNode> Nodes { get; } = new();
-
-    public NuGetConfigTreeNode(string path)
-    {
-        Path = path;
-    }
 
     public void AddNode(NuGetConfigTreeNode node)
     {

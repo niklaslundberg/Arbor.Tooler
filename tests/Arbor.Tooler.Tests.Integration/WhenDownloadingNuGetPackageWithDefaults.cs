@@ -9,19 +9,15 @@ using Xunit.Abstractions;
 
 namespace Arbor.Tooler.Tests.Integration;
 
-public class WhenDownloadingNuGetPackageWithDefaults
+public class WhenDownloadingNuGetPackageWithDefaults(ITestOutputHelper output)
 {
-    public WhenDownloadingNuGetPackageWithDefaults(ITestOutputHelper output) => _output = output;
-
-    private readonly ITestOutputHelper _output;
-
     [Fact]
     public async Task ItShouldHaveDownloadedTheLatestVersion()
     {
         using var nugetExeDownloadDir = TempDirectory.CreateTempDirectory();
         using var packagesTempDir = TempDirectory.CreateTempDirectory();
         using var httpClient = new HttpClient();
-        Logger testLogger = new LoggerConfiguration().WriteTo.MySink(_output.WriteLine).MinimumLevel
+        Logger testLogger = new LoggerConfiguration().WriteTo.MySink(output.WriteLine).MinimumLevel
             .Verbose()
             .CreateLogger();
 
@@ -58,9 +54,9 @@ public class WhenDownloadingNuGetPackageWithDefaults
         Assert.NotNull(nuGetPackageInstallResult);
         Assert.NotNull(nuGetPackageInstallResult.SemanticVersion);
 
-        _output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
-        _output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
-        _output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
+        output.WriteLine(nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
+        output.WriteLine(nuGetPackageInstallResult.PackageDirectory?.FullName);
+        output.WriteLine(nuGetPackageInstallResult.NuGetPackageId.PackageId);
 
         Assert.Equal("1.0.0", nuGetPackageInstallResult.SemanticVersion?.ToNormalizedString());
     }

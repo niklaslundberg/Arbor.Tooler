@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net10.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/niklaslundberg/Arbor.Tooler</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageProjectUrl>https://github.com/niklaslundberg/Arbor.Tooler</PackageProjectUrl>
-		<Copyright>Niklas Lundberg 2018-2024</Copyright>
+		<Copyright>Niklas Lundberg 2018-2025</Copyright>
 		<IncludeSymbols>True</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,14 +19,13 @@
 
 	<ItemGroup>
 		<PackageReference Include="Arbor.Processing" Version="0.6.0" />
-		<PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
-		<PackageReference Include="NewtonSoft.Json" Version="13.0.3" />
-		<PackageReference Include="NuGet.Packaging" Version="6.12.1" />
-		<PackageReference Include="NuGet.Configuration" Version="6.12.1" />
-		<PackageReference Include="NuGet.Protocol" Version="6.12.1" />
-		<PackageReference Include="NuGet.Versioning" Version="6.12.1" />
-		<PackageReference Include="System.IO.Packaging" Version="9.0.0" />
-		<PackageReference Include="Serilog" Version="4.1.0" />
+		<PackageReference Include="NewtonSoft.Json" Version="13.0.4" />
+		<PackageReference Include="NuGet.Packaging" Version="7.0.1" />
+		<PackageReference Include="NuGet.Configuration" Version="7.0.1" />
+		<PackageReference Include="NuGet.Protocol" Version="7.0.1" />
+		<PackageReference Include="NuGet.Versioning" Version="7.0.1" />
+		<PackageReference Include="System.IO.Packaging" Version="10.0.0" />
+		<PackageReference Include="Serilog" Version="4.3.0" />
 	</ItemGroup>
 
 </Project>
