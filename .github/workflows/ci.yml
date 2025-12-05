@@ -5,7 +5,7 @@ on: [push]
 jobs:
   build:
 
-    runs-on: windows-2022
+    runs-on: windows-2025
 
     steps:
     - uses: actions/checkout@v4
@@ -13,11 +13,7 @@ jobs:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-            8.0.x
-    - uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
         cache: true
         cache-dependency-path: tests/Arbor.Tooler.Tests.Integration
     - name: install-tools
