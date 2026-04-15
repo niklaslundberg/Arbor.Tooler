@@ -14,8 +14,8 @@
   <ItemGroup>
     <PackageReference Include="Arbor.Aesculus" Version="3.9.0" />
     <PackageReference Include="Arbor.Aesculus.NCrunch" Version="3.9.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageReference Include="AwesomeAssertions" Version="9.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
+    <PackageReference Include="AwesomeAssertions" Version="9.4.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.XUnit" Version="3.0.19" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -27,7 +27,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.IO.Packaging" Version="10.0.0" />
+    <PackageReference Include="System.IO.Packaging" Version="10.0.6" />
   </ItemGroup>
 
   <ItemGroup>
